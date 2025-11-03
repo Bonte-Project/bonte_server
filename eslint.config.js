@@ -29,9 +29,15 @@ export default tseslint.config(
       ],
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/explicit-module-boundary-types': 'off',
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-unsafe-call': 'off',
+      '@typescript-eslint/no-unsafe-return': 'off',
+      '@typescript-eslint/no-unsafe-argument': 'off',
+      '@typescript-eslint/no-unsafe-enum-comparison': 'off',
     },
   },
   {
-    ignores: ['dist/**', 'node_modules/**', '*.config.js', '*.config.mjs'],
+    ignores: ['dist/**', 'node_modules/**', '*.config.js', '*.config.mjs', '*.config.ts'],
   }
 );

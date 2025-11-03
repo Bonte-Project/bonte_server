@@ -37,6 +37,7 @@
     "drizzle-orm": "^0.44.7",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
+    "nodemailer": "^7.0.10",
     "pg": "^8.16.3",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1"
@@ -45,10 +46,12 @@
     "@eslint/js": "^9.38.0",
     "@types/bcrypt": "^6.0.0",
     "@types/bun": "latest",
+    "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.4",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^24.9.1",
+    "@types/nodemailer": "^7.0.3",
     "@types/pg": "^8.15.5",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
@@ -63,7 +66,6 @@
     "prettier": "^3.6.2",
     "tsx": "^4.20.6",
     "typescript": "^5.7.2",
-    "typescript-eslint": "^8.46.2",
-    "@types/cookie-parser": "^1.4.10"
+    "typescript-eslint": "^8.46.2"
   }
 }

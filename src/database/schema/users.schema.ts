@@ -4,9 +4,9 @@ export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
   email: varchar('email', { length: 255 }).notNull().unique(),
   password: varchar('password', { length: 255 }),
-  full_name: varchar('full_name', { length: 255 }),
-  avatar_url: text('avatar_url'),
+  fullName: varchar('full_name', { length: 255 }),
+  avatarUrl: text('avatar_url'),
   role: varchar('role', { length: 20 }).default('user').notNull(), // 'user' | 'trainer' | 'admin'
-  is_email_verified: boolean('is_email_verified').default(false).notNull(),
-  created_at: timestamp('created_at').defaultNow().notNull(),
+  isEmailVerified: boolean('is_email_verified').default(false).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
 });
