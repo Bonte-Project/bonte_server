@@ -4,6 +4,7 @@ import * as authService from './auth.service';
 
 export const register: ExpressHandler = async (req, res) => {
   try {
+    console.log('register');
     const { fullName, email, password, role } = req.body;
 
     if (!fullName || !email || !password || !role) {
@@ -11,15 +12,18 @@ export const register: ExpressHandler = async (req, res) => {
       return;
     }
 
+    const normalizedEmail = email.trim().toLowerCase();
+
     await authService.register({
       fullName: fullName.trim(),
-      email: email.trim().toLowerCase(),
+      email: normalizedEmail,
       password,
       role,
     });
 
     res.status(201).json({
       message: 'Registration successful. Please check your email for verification code.',
+      email: normalizedEmail,
     });
   } catch (error) {
     console.error('Error in register:', error);
@@ -41,18 +45,19 @@ export const register: ExpressHandler = async (req, res) => {
 
 export const verifyEmail: ExpressHandler = async (req, res) => {
   try {
-    const { code } = req.body;
+    const { email, code } = req.body;
 
-    if (!code) {
-      res.status(400).json({ message: 'Verification code is required' });
+    if (!email || !code) {
+      res.status(400).json({ message: 'Email and verification code are required' });
       return;
     }
 
-    if (typeof code !== 'string') {
-      res.status(400).json({ message: 'Invalid code format' });
+    if (typeof email !== 'string' || typeof code !== 'string') {
+      res.status(400).json({ message: 'Invalid data format' });
       return;
     }
 
+    const normalizedEmail = email.trim().toLowerCase();
     const trimmedCode = code.trim();
 
     if (trimmedCode.length !== 4) {
@@ -65,23 +70,45 @@ export const verifyEmail: ExpressHandler = async (req, res) => {
       return;
     }
 
-    await authService.verifyEmail(trimmedCode);
+    await authService.verifyEmail(normalizedEmail, trimmedCode);
 
     res.status(200).json({ message: 'Email verified successfully' });
   } catch (error) {
     console.error('Error in verifyEmail:', error);
     const errorMessage = extractErrorMessage(error);
 
-    if (errorMessage === 'Invalid code format') {
-      res.status(400).json({ message: 'Invalid verification code format' });
+    if (errorMessage === 'User not found') {
+      res.status(400).json({ message: 'User not found' });
       return;
     }
 
-    if (errorMessage === 'Invalid or expired code') {
+    if (errorMessage === 'Email already verified') {
+      res.status(400).json({ message: 'Email already verified' });
+      return;
+    }
+
+    if (errorMessage === 'Invalid or expired verification code') {
       res.status(400).json({ message: 'Invalid or expired verification code' });
       return;
     }
 
     res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+export const googleRegister: ExpressHandler = async (req, res) => {
+  try {
+    const { token } = req.body;
+    if (!token) {
+      res.status(400).json({ message: 'Google OAuth token is required' });
+      return;
+    }
+
+    const result = await authService.googleRegister(token);
+    res.status(201).json(result);
+  } catch (error) {
+    console.error('Error in googleRegister:', error);
+    const errorMessage = extractErrorMessage(error);
+    res.status(500).json({ message: errorMessage || 'Internal server error' });
   }
 };
