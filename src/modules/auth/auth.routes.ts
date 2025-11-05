@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { register, verifyEmail } from './auth.controller';
+import { register, verifyEmail, googleRegister } from './auth.controller';
 
 const router = Router();
 
@@ -177,5 +177,49 @@ router.post('/register', register);
  *         $ref: '#/components/responses/InternalServerError'
  */
 router.post('/verify-email', verifyEmail);
+
+/**
+ * @swagger
+ * /auth/google:
+ *   post:
+ *     summary: Register or login with Google
+ *     description: Accepts a Google OAuth token, verifies it, and registers/logs in the user
+ *     tags:
+ *       - Authentication
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               token:
+ *                 type: string
+ *                 description: Google OAuth token
+ *                 example: eyJhbGciOiJSUzI1NiIsImtpZCI6...
+ *     responses:
+ *       201:
+ *         description: Google registration/login successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Google registration successful
+ *                 token:
+ *                   type: string
+ *                   example: jwt-token-here
+ *       400:
+ *         description: Bad request - Missing or invalid token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
+ */
+router.post('/google', googleRegister);
 
 export default router;

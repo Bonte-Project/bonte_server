@@ -7,6 +7,8 @@ import cookieParser from 'cookie-parser';
 import usersRoutes from './modules/users/users.routes';
 import authRoutes from './modules/auth/auth.routes';
 
+console.log('Starting API server...');
+
 dotenv.config();
 
 const app = express();
@@ -18,6 +20,10 @@ app.use(express.json());
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use('/api/users', usersRoutes);
 app.use('/api/auth', authRoutes);
+
+app.get('/', (req, res) => {
+  res.send('API server is running');
+});
 
 const PORT = parseInt(process.env.PORT || '10000', 10);
 const HOST = '0.0.0.0';

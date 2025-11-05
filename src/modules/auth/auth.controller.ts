@@ -85,3 +85,20 @@ export const verifyEmail: ExpressHandler = async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 };
+
+export const googleRegister: ExpressHandler = async (req, res) => {
+  try {
+    const { token } = req.body;
+    if (!token) {
+      res.status(400).json({ message: 'Google OAuth token is required' });
+      return;
+    }
+
+    const result = await authService.googleRegister(token);
+    res.status(201).json(result);
+  } catch (error) {
+    console.error('Error in googleRegister:', error);
+    const errorMessage = extractErrorMessage(error);
+    res.status(500).json({ message: errorMessage || 'Internal server error' });
+  }
+};
