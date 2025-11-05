@@ -5,6 +5,11 @@ import { RegisterInput, RegisterResult, UserRole } from './types/auth.types';
 import { generateVerificationCode, hashPassword } from '../../shared/utils/auth.util';
 import { verificationCode } from '../../database/schema/verification_code.schema';
 import { sendVerificationEmail } from '../email/email.service';
+import { OAuth2Client } from 'google-auth-library';
+import jwt from 'jsonwebtoken';
+
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
+const client = new OAuth2Client(GOOGLE_CLIENT_ID);
 
 export const register = async ({
   fullName,
@@ -108,4 +113,49 @@ export const verifyEmail = async (code: string): Promise<void> => {
   await db.delete(verificationCode).where(eq(verificationCode.userId, userId));
 
   console.log(`Email verified for user ${userId}`);
+};
+
+export const googleRegister = async (token: string) => {
+  const ticket = await client.verifyIdToken({
+    idToken: token,
+    audience: GOOGLE_CLIENT_ID,
+  });
+  const payload = ticket.getPayload();
+  if (!payload || !payload.email) {
+    throw new Error('Invalid Google token or missing email');
+  }
+  const email = payload.email;
+  const fullName = payload.name || 'Google User';
+
+  let user = (await db.select().from(users).where(eq(users.email, email))).at(0);
+  if (!user) {
+    const [newUser] = await db
+      .insert(users)
+      .values({
+        fullName,
+        email,
+        password: '',
+        role: 'user',
+        isEmailVerified: true,
+      })
+      .returning();
+    user = newUser;
+  }
+
+  const jwtToken = jwt.sign(
+    { userId: user.id, email: user.email },
+    process.env.JWT_SECRET || 'secret',
+    { expiresIn: '7d' }
+  );
+
+  return {
+    message: 'Google registration successful',
+    token: jwtToken,
+    user: {
+      id: user.id,
+      email: user.email,
+      fullName: user.fullName,
+      role: user.role,
+    },
+  };
 };
