@@ -24,7 +24,14 @@ export const register = async ({
   const existingUser = await db.select().from(users).where(eq(users.email, email));
 
   if (existingUser.length > 0) {
-    throw new Error('User already exists');
+    const user = existingUser[0];
+
+    if (user.isEmailVerified) {
+      throw new Error('User already exists');
+    }
+
+    await db.delete(verificationCode).where(eq(verificationCode.userId, user.id));
+    await db.delete(users).where(eq(users.id, user.id));
   }
 
   const hashedPassword = await hashPassword(password);
