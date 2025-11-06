@@ -1,8 +1,23 @@
 import { and, eq, gt } from 'drizzle-orm';
 import { db } from '../../database';
 import { users } from '../../database/schema/users.schema';
-import { RegisterInput, RegisterResult, UserRole } from './types/auth.types';
-import { generateVerificationCode, hashPassword } from '../../shared/utils/auth.util';
+import {
+  RegisterInput,
+  RegisterResult,
+  UserRole,
+  LoginInput,
+  LoginResult,
+  RefreshTokenInput,
+  RefreshTokenResult,
+} from './types/auth.types';
+import {
+  comparePassword,
+  generateAccessToken,
+  generateRefreshToken,
+  generateVerificationCode,
+  hashPassword,
+  verifyToken,
+} from '../../shared/utils/auth.util';
 import { verificationCode } from '../../database/schema/verification_code.schema';
 import { sendVerificationEmail } from '../email/email.service';
 import { OAuth2Client } from 'google-auth-library';
@@ -120,6 +135,37 @@ export const verifyEmail = async (email: string, code: string): Promise<void> =>
   console.log(`Email verified successfully for user: ${user.id}`);
 };
 
+export const login = async ({ email, password }: LoginInput): Promise<LoginResult> => {
+  const [user] = await db.select().from(users).where(eq(users.email, email));
+
+  if (!user) throw new Error('User not found');
+  if (!user.isEmailVerified) throw new Error('Please verify your email');
+
+  const match = await comparePassword(password, user.password ?? '');
+  if (!match) throw new Error('Incorrect password');
+
+  const accessToken = generateAccessToken(user.id, email);
+  const refreshToken = generateRefreshToken(user.id);
+
+  return { accessToken, refreshToken };
+};
+
+export const refreshTokens = async ({
+  refreshToken,
+}: RefreshTokenInput): Promise<RefreshTokenResult> => {
+  const decoded = verifyToken(refreshToken, process.env.JWT_REFRESH_SECRET!);
+  if (!decoded || typeof decoded === 'string') throw new Error('Invalid or expired refresh token');
+
+  const { userId } = decoded as { userId: string };
+  const [user] = await db.select().from(users).where(eq(users.id, userId));
+  if (!user) throw new Error('User not found');
+
+  const accessToken = generateAccessToken(userId, user.email);
+  const newRefreshToken = generateRefreshToken(userId);
+
+  return { accessToken, refreshToken: newRefreshToken };
+};
+
 export const googleRegister = async (token: string) => {
   const ticket = await client.verifyIdToken({
     idToken: token,
@@ -164,3 +210,7 @@ export const googleRegister = async (token: string) => {
     },
   };
 };
+
+// function generateAccessToken(id: string, email: string) {
+//   throw new Error('Function not implemented.');
+// }

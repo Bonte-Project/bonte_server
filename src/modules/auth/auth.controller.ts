@@ -96,6 +96,113 @@ export const verifyEmail: ExpressHandler = async (req, res) => {
   }
 };
 
+export const login: ExpressHandler = async (req, res) => {
+  try {
+    console.log('login');
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      res.status(400).json({ message: 'Email and password are required' });
+      return;
+    }
+
+    if (typeof email !== 'string' || typeof password !== 'string') {
+      res.status(400).json({ message: 'Invalid data format' });
+      return;
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      res.status(400).json({ message: 'Invalid email format' });
+      return;
+    }
+    //
+    // if (password.length < 6) {
+    //   res.status(400).json({ message: 'Password must be at least 6 characters long' });
+    //   return;
+    // }
+
+    const { accessToken, refreshToken } = await authService.login({
+      email: normalizedEmail,
+      password,
+    });
+
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    res.status(200).json({
+      message: 'Login successful',
+      accessToken,
+    });
+  } catch (error) {
+    console.error('Error in login:', error);
+    const errorMessage = extractErrorMessage(error);
+
+    if (errorMessage === 'User not found') {
+      res.status(404).json({ message: 'User with this email does not exist' });
+      return;
+    }
+
+    if (errorMessage === 'Incorrect password') {
+      res.status(401).json({ message: 'Incorrect password' });
+      return;
+    }
+
+    if (errorMessage === 'Please verify your email') {
+      res.status(403).json({ message: 'Please verify your email before logging in' });
+      return;
+    }
+
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+export const refreshToken: ExpressHandler = async (req, res) => {
+  try {
+    const token = req.cookies.refreshToken;
+
+    if (!token) {
+      res.status(401).json({ message: 'Missing refresh token' });
+      return;
+    }
+
+    const { accessToken, refreshToken: newRefreshToken } = await authService.refreshTokens({
+      refreshToken: token,
+    });
+
+    res.cookie('refreshToken', newRefreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    res.status(200).json({
+      message: 'Token refreshed successfully',
+      accessToken,
+    });
+  } catch (error) {
+    console.error('Error in refreshToken:', error);
+    const errorMessage = extractErrorMessage(error);
+
+    if (errorMessage === 'Invalid or expired refresh token') {
+      res.status(401).json({ message: 'Invalid or expired refresh token' });
+      return;
+    }
+
+    if (errorMessage === 'User not found') {
+      res.status(404).json({ message: 'User not found' });
+      return;
+    }
+
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
 export const googleRegister: ExpressHandler = async (req, res) => {
   try {
     const { token } = req.body;

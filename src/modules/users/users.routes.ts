@@ -1,26 +1,22 @@
 import { Router } from 'express';
-import { getUser } from './users.controller';
+import { me } from './users.controller';
+import { authMiddleware } from '../../shared/middlewares/auth.middleware';
 
 const router = Router();
 
 /**
  * @swagger
- * /users/{userId}:
+ * /auth/me:
  *   get:
- *     summary: Get a user by ID
- *     description: Retrieves a single user from the mock database by their unique ID.
- *     tags: [Users]
- *     parameters:
- *       - in: path
- *         name: userId
- *         schema:
- *           type: string
- *         required: true
- *         description: The unique ID of the user
- *         example: "1"
+ *     summary: Get current authenticated user
+ *     description: Returns data of the user associated with the provided access token
+ *     tags:
+ *       - Authentication
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: User retrieved successfully
+ *         description: User data fetched successfully
  *         content:
  *           application/json:
  *             schema:
@@ -28,79 +24,34 @@ const router = Router();
  *               properties:
  *                 message:
  *                   type: string
- *                   example: "User 1 was gotten successfully"
+ *                   example: User data fetched successfully
  *                 user:
- *                   $ref: '#/components/schemas/MockUser'
- *       400:
- *         description: Bad request - User ID is missing
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *                     fullName:
+ *                       type: string
+ *                     role:
+ *                       type: string
+ *       401:
+ *         description: Missing or invalid token
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: "User ID is required"
- *       404:
- *         description: User not found
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: "User not found"
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *             examples:
+ *               missingToken:
+ *                 value:
+ *                   message: Authorization header missing or malformed
+ *               invalidToken:
+ *                 value:
+ *                   message: Invalid or expired token
  *       500:
- *         description: Internal server error
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: "Internal server error"
+ *         $ref: '#/components/responses/InternalServerError'
  */
-
-/**
- * @swagger
- * components:
- *   schemas:
- *     MockUser:
- *       type: object
- *       required:
- *         - id
- *         - name
- *         - email
- *         - role
- *         - createdAt
- *       properties:
- *         id:
- *           type: string
- *           description: Unique identifier for the user
- *           example: "1"
- *         name:
- *           type: string
- *           description: Full name of the user
- *           example: "Alice Johnson"
- *         email:
- *           type: string
- *           format: email
- *           description: Email address of the user
- *           example: "alice@example.com"
- *         role:
- *           type: string
- *           enum: [admin, user, moderator]
- *           description: Role of the user in the system
- *           example: "admin"
- *         createdAt:
- *           type: string
- *           format: date-time
- *           description: Timestamp when the user was created
- *           example: "2024-01-15T10:00:00Z"
- */
-
-router.get('/:userId', getUser);
+router.get('/me', authMiddleware, me);
 
 export default router;
