@@ -1,17 +1,58 @@
 import { Router } from 'express';
-import { me } from './users.controller';
+import { me, updateMe } from './users.controller';
 import { authMiddleware } from '../../shared/middlewares/auth.middleware';
 
 const router = Router();
 
 /**
  * @swagger
- * /auth/me:
+ * components:
+ *   securitySchemes:
+ *     bearerAuth:
+ *       type: http
+ *       scheme: bearer
+ *       bearerFormat: JWT
+ *   schemas:
+ *     ErrorResponse:
+ *       type: object
+ *       properties:
+ *         message:
+ *           type: string
+ *   responses:
+ *     UnauthorizedError:
+ *       description: Unauthorized
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ErrorResponse'
+ *           example:
+ *             message: Missing or invalid token
+ *     InternalServerError:
+ *       description: Internal Server Error
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ErrorResponse'
+ *           example:
+ *             message: Internal server error
+ *     BadRequestError:
+ *       description: Bad Request
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ErrorResponse'
+ *           example:
+ *             message: Invalid input
+ */
+
+/**
+ * @swagger
+ * /users/me:
  *   get:
  *     summary: Get current authenticated user
  *     description: Returns data of the user associated with the provided access token
  *     tags:
- *       - Authentication
+ *       - Users
  *     security:
  *       - bearerAuth: []
  *     responses:
@@ -26,32 +67,50 @@ const router = Router();
  *                   type: string
  *                   example: User data fetched successfully
  *                 user:
- *                   type: object
- *                   properties:
- *                     id:
- *                       type: string
- *                     email:
- *                       type: string
- *                     fullName:
- *                       type: string
- *                     role:
- *                       type: string
+ *                   $ref: '#/components/schemas/User'
  *       401:
- *         description: Missing or invalid token
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- *             examples:
- *               missingToken:
- *                 value:
- *                   message: Authorization header missing or malformed
- *               invalidToken:
- *                 value:
- *                   message: Invalid or expired token
+ *         $ref: '#/components/responses/UnauthorizedError'
  *       500:
  *         $ref: '#/components/responses/InternalServerError'
  */
 router.get('/me', authMiddleware, me);
+
+/**
+ * @swagger
+ * /users/me:
+ *   patch:
+ *     summary: Update current authenticated user
+ *     description: Updates data of the user associated with the provided access token
+ *     tags:
+ *       - Users
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UpdateUserDto'
+ *     responses:
+ *       200:
+ *         description: User data updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: User data updated successfully
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ *       400:
+ *         $ref: '#/components/responses/BadRequestError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
+ */
+router.patch('/me', authMiddleware, updateMe);
 
 export default router;
