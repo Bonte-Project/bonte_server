@@ -44,7 +44,7 @@ const router = Router();
  *         createdAt:
  *           type: string
  *           format: date-time
- *         is_premium:
+ *         isPremium:
  *           type: boolean
  *     UpdateUserDto:
  *       type: object

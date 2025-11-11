@@ -18,9 +18,9 @@ export const getMe = async (userId: string) => {
     return null;
   }
 
-  const is_premium = subscription?.status === 'active' && subscription?.endDate > new Date();
+  const isPremium = subscription?.status === 'active' && subscription?.endDate > new Date();
 
-  return { ...user, is_premium };
+  return { ...user, isPremium };
 };
 
 export const updateMe = async (userId: string, data: UpdateUserDto) => {

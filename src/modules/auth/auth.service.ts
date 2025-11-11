@@ -1,4 +1,4 @@
-import { and, eq, gt } from 'drizzle-orm';
+import { and, eq, gt, gte } from 'drizzle-orm';
 import { db } from '../../database';
 import { users } from '../../database/schema/users.schema';
 import {
@@ -19,7 +19,7 @@ import {
   verifyToken,
 } from '../../shared/utils/auth.util';
 import { verificationCode } from '../../database/schema/verification_code.schema';
-import { sendVerificationEmail } from '../email/email.service';
+import { sendPasswordResetEmail, sendVerificationEmail } from '../email/email.service';
 import { OAuth2Client } from 'google-auth-library';
 import jwt from 'jsonwebtoken';
 
@@ -93,8 +93,7 @@ export const verifyEmail = async (email: string, code: string): Promise<void> =>
       isEmailVerified: users.isEmailVerified,
     })
     .from(users)
-    .where(eq(users.email, email))
-    .limit(1);
+    .where(eq(users.email, email));
 
   if (userResult.length === 0) {
     console.log(`User not found for email: ${email}`);
@@ -120,8 +119,7 @@ export const verifyEmail = async (email: string, code: string): Promise<void> =>
         eq(verificationCode.code, code),
         gt(verificationCode.expiresAt, new Date())
       )
-    )
-    .limit(1);
+    );
 
   if (codeResult.length === 0) {
     console.log(`Invalid or expired code for user: ${user.id}`);
@@ -211,6 +209,73 @@ export const googleRegister = async (token: string) => {
   };
 };
 
-// function generateAccessToken(id: string, email: string) {
-//   throw new Error('Function not implemented.');
-// }
+export const forgotPassword = async (email: string) => {
+  const userResult = await db
+    .select({
+      id: users.id,
+    })
+    .from(users)
+    .where(eq(users.email, email));
+
+  if (userResult.length === 0) {
+    console.log(`No user found for email: ${email}`);
+    throw new Error('User not found');
+  }
+
+  const user = userResult[0];
+  const code = generateVerificationCode();
+  const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+
+  await db.delete(verificationCode).where(eq(verificationCode.userId, user.id));
+  await db.insert(verificationCode).values({
+    userId: user.id,
+    code,
+    expiresAt,
+  });
+
+  await sendPasswordResetEmail(email, code);
+
+  console.log(`Code sent to ${email}: ${code}`);
+};
+
+export const verifyResetCode = async (email: string, code: string) => {
+  const userResult = await db.select({ id: users.id }).from(users).where(eq(users.email, email));
+
+  if (userResult.length === 0) {
+    console.log(`No user found for email: ${email}`);
+    throw new Error('User not found');
+  }
+
+  const user = userResult[0];
+
+  const codeResult = await db
+    .select()
+    .from(verificationCode)
+    .where(
+      and(
+        eq(verificationCode.userId, user.id),
+        eq(verificationCode.code, code),
+        gte(verificationCode.expiresAt, new Date())
+      )
+    );
+
+  if (codeResult.length === 0) {
+    throw new Error('Invalid or expired code');
+  }
+
+  await db.delete(verificationCode).where(eq(verificationCode.id, codeResult[0].id));
+};
+
+export const resetPassword = async (email: string, newPassword: string) => {
+  const userResult = await db.select({ id: users.id }).from(users).where(eq(users.email, email));
+
+  if (userResult.length === 0) {
+    console.log(`No user found for email: ${email}`);
+    throw new Error('User not found');
+  }
+
+  const user = userResult[0];
+  const hashedPassword = await hashPassword(newPassword);
+
+  await db.update(users).set({ password: hashedPassword }).where(eq(users.id, user.id));
+};

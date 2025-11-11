@@ -98,7 +98,6 @@ export const verifyEmail: ExpressHandler = async (req, res) => {
 
 export const login: ExpressHandler = async (req, res) => {
   try {
-    console.log('login');
     const { email, password } = req.body;
 
     if (!email || !password) {
@@ -116,7 +115,7 @@ export const login: ExpressHandler = async (req, res) => {
       res.status(400).json({ message: 'Invalid email format' });
       return;
     }
-    //
+
     // if (password.length < 6) {
     //   res.status(400).json({ message: 'Password must be at least 6 characters long' });
     //   return;
@@ -217,5 +216,141 @@ export const googleRegister: ExpressHandler = async (req, res) => {
     console.error('Error in googleRegister:', error);
     const errorMessage = extractErrorMessage(error);
     res.status(500).json({ message: errorMessage || 'Internal server error' });
+  }
+};
+
+export const forgotPassword: ExpressHandler = async (req, res) => {
+  try {
+    console.log('forgotPassword request:', req.body);
+
+    const { email } = req.body;
+
+    if (!email) {
+      res.status(400).json({ message: 'Email is required' });
+      return;
+    }
+
+    if (typeof email !== 'string') {
+      res.status(400).json({ message: 'Invalid data format' });
+      return;
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      res.status(400).json({ message: 'Invalid email format' });
+      return;
+    }
+
+    await authService.forgotPassword(normalizedEmail);
+
+    res.status(200).json({
+      message: 'Password reset code sent. Please check your email.',
+      email: normalizedEmail,
+    });
+  } catch (error) {
+    console.error('Error in forgotPassword:', error);
+    const errorMessage = extractErrorMessage(error);
+
+    if (errorMessage === 'User not found') {
+      res.status(404).json({ message: 'User with this email not found' });
+      return;
+    }
+
+    if (errorMessage === 'Failed to send password reset email') {
+      res.status(500).json({ message: 'Failed to send reset email. Please try again later.' });
+      return;
+    }
+
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+export const verifyResetCode: ExpressHandler = async (req, res) => {
+  try {
+    const { email, code } = req.body;
+
+    if (!email || !code) {
+      res.status(400).json({ message: 'Email and code are required' });
+      return;
+    }
+
+    if (typeof email !== 'string' || typeof code !== 'string') {
+      res.status(400).json({ message: 'Invalid data format' });
+      return;
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      res.status(400).json({ message: 'Invalid email format' });
+      return;
+    }
+
+    const trimmedCode = code.trim();
+    if (!/^\d{4}$/.test(trimmedCode)) {
+      res.status(400).json({ message: 'Code must contain only digits' });
+      return;
+    }
+
+    await authService.verifyResetCode(normalizedEmail, trimmedCode);
+
+    res.status(200).json({
+      message: 'Code verified. You can now reset your password.',
+    });
+  } catch (error) {
+    console.error('Error in verifyResetCode:', error);
+    const errorMessage = extractErrorMessage(error);
+
+    if (errorMessage === 'User not found') {
+      res.status(404).json({ message: 'User not found' });
+      return;
+    }
+
+    if (errorMessage === 'Invalid or expired code') {
+      res.status(400).json({ message: 'Invalid or expired code' });
+      return;
+    }
+
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+export const resetPassword: ExpressHandler = async (req, res) => {
+  try {
+    const { email, newPassword } = req.body;
+
+    if (!email || !newPassword) {
+      res.status(400).json({ message: 'Email and new password are required' });
+      return;
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      res.status(400).json({ message: 'Invalid email format' });
+      return;
+    }
+
+    await authService.resetPassword(normalizedEmail, newPassword);
+
+    res.status(200).json({
+      message: 'Password successfully reset. You can now log in.',
+    });
+  } catch (error) {
+    console.error('Error in resetPassword:', error);
+    const errorMessage = extractErrorMessage(error);
+
+    if (errorMessage === 'User not found') {
+      res.status(404).json({ message: 'User not found' });
+      return;
+    }
+
+    if (errorMessage === 'Invalid or expired code') {
+      res.status(400).json({ message: 'Invalid or expired code' });
+      return;
+    }
+
+    res.status(500).json({ message: 'Internal server error' });
   }
 };
