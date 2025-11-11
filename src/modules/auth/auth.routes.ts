@@ -1,5 +1,14 @@
 import { Router } from 'express';
-import { register, verifyEmail, googleRegister, login, refreshToken } from './auth.controller';
+import {
+  register,
+  verifyEmail,
+  googleRegister,
+  login,
+  refreshToken,
+  forgotPassword,
+  verifyResetCode,
+  resetPassword,
+} from './auth.controller';
 
 const router = Router();
 
@@ -322,5 +331,205 @@ router.post('/refresh', refreshToken);
  *         $ref: '#/components/responses/InternalServerError'
  */
 router.post('/google', googleRegister);
+
+/**
+ * @swagger
+ * /auth/forgot-password:
+ *   post:
+ *     summary: Request password reset
+ *     description: Sends a 4-digit password reset code to the user's email if the email exists in the system.
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: john.doe@example.com
+ *     responses:
+ *       200:
+ *         description: Password reset code sent successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Password reset code sent. Please check your email.
+ *                 email:
+ *                   type: string
+ *                   format: email
+ *                   example: john.doe@example.com
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ *         description: Invalid email format or missing email
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *             examples:
+ *               missingEmail:
+ *                 value:
+ *                   message: Email is required
+ *               invalidEmail:
+ *                 value:
+ *                   message: Invalid email format
+ *       404:
+ *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *             example:
+ *               message: User with this email not found
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
+ */
+router.post('/forgot-password', forgotPassword);
+
+/**
+ * @swagger
+ * /auth/verify-reset-code:
+ *   post:
+ *     summary: Verify password reset code
+ *     description: Validates the 4-digit code sent to the user's email for password reset.
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - code
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: john.doe@example.com
+ *               code:
+ *                 type: string
+ *                 pattern: '^\d{4}$'
+ *                 example: "1234"
+ *                 description: 4-digit numeric code
+ *     responses:
+ *       200:
+ *         description: Reset code verified successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Code verified. You can now reset your password.
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ *         description: Invalid input (email, code format, or code not 4 digits)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *             examples:
+ *               missingFields:
+ *                 value:
+ *                   message: Email and code are required
+ *               invalidEmail:
+ *                 value:
+ *                   message: Invalid email format
+ *               invalidCode:
+ *                 value:
+ *                   message: Code must contain only digits
+ *               expiredOrInvalid:
+ *                 value:
+ *                   message: Invalid or expired code
+ *       404:
+ *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *             example:
+ *               message: User not found
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
+ */
+router.post('/verify-reset-code', verifyResetCode);
+
+/**
+ * @swagger
+ * /auth/reset-password:
+ *   post:
+ *     summary: Reset user password
+ *     description: Resets the user's password using a valid reset code (must be verified first via `/verify-reset-code`).
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - newPassword
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: john.doe@example.com
+ *               newPassword:
+ *                 type: string
+ *                 format: password
+ *                 minLength: 6
+ *                 example: NewSecureP@ss123
+ *                 description: New password (minimum 6 characters recommended)
+ *     responses:
+ *       200:
+ *         description: Password reset successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Password successfully reset. You can now log in.
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ *         description: Invalid input or code not verified/expired
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *             examples:
+ *               missingFields:
+ *                 value:
+ *                   message: Email and new password are required
+ *               invalidEmail:
+ *                 value:
+ *                   message: Invalid email format
+ *               invalidCode:
+ *                 value:
+ *                   message: Invalid or expired code
+ *       404:
+ *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *             example:
+ *               message: User not found
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
+ */
+router.post('/reset-password', resetPassword);
 
 export default router;
