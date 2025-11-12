@@ -19,13 +19,10 @@ import {
   verifyToken,
 } from '../../shared/utils/auth.util';
 import { verificationCode } from '../../database/schema/verification_code.schema';
-import { sendVerificationEmail } from '../email/email.service';
 import { sendPasswordResetEmail, sendVerificationEmail } from '../email/email.service';
-import { OAuth2Client } from 'google-auth-library';
 import jwt from 'jsonwebtoken';
 import axios from 'axios';
 import { google_oauth_credentials } from '../../database/schema/google_oauth_credentials.schema';
-import { refresh_tokens } from '../../database/schema/refresh_tokens.schema';
 
 export const register = async ({
   fullName,
@@ -247,13 +244,6 @@ export const googleAuth = async ({ code, role }: { code: string; role: string })
         createdAt: tokenExpiry,
       },
     });
-
-  const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-  await db.insert(refresh_tokens).values({
-    userId,
-    token: refresh_token,
-    expiresAt,
-  });
 
   const jwtAccessToken = jwt.sign({ userId, email }, process.env.JWT_SECRET || 'secret', {
     expiresIn: '15m',

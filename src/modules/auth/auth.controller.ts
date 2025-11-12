@@ -169,11 +169,11 @@ export const refreshToken: ExpressHandler = async (req, res) => {
       return;
     }
 
-    const { accessToken, refreshToken: newRefreshToken } = await authService.refreshTokens({
+    const { accessToken, refreshToken: refreshToken } = await authService.refreshTokens({
       refreshToken: token,
     });
 
-    res.cookie('refreshToken', newRefreshToken, {
+    res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
@@ -253,6 +253,9 @@ export const googleLogin: ExpressHandler = async (req, res) => {
     console.error('Error in googleLogin:', error);
     const errorMessage = extractErrorMessage(error);
     res.status(500).json({ message: errorMessage || 'Internal server error' });
+  }
+};
+
 export const forgotPassword: ExpressHandler = async (req, res) => {
   try {
     console.log('forgotPassword request:', req.body);
