@@ -1,10 +1,27 @@
-import { and, eq, gt } from 'drizzle-orm';
+import { and, eq, gt, gte } from 'drizzle-orm';
 import { db } from '../../database';
 import { users } from '../../database/schema/users.schema';
-import { RegisterInput, RegisterResult, UserRole } from './types/auth.types';
-import { generateVerificationCode, hashPassword } from '../../shared/utils/auth.util';
+import {
+  RegisterInput,
+  RegisterResult,
+  UserRole,
+  LoginInput,
+  LoginResult,
+  RefreshTokenInput,
+  RefreshTokenResult,
+} from './types/auth.types';
+import {
+  comparePassword,
+  generateAccessToken,
+  generateRefreshToken,
+  generateVerificationCode,
+  hashPassword,
+  verifyToken,
+} from '../../shared/utils/auth.util';
 import { verificationCode } from '../../database/schema/verification_code.schema';
 import { sendVerificationEmail } from '../email/email.service';
+import { sendPasswordResetEmail, sendVerificationEmail } from '../email/email.service';
+import { OAuth2Client } from 'google-auth-library';
 import jwt from 'jsonwebtoken';
 import axios from 'axios';
 import { google_oauth_credentials } from '../../database/schema/google_oauth_credentials.schema';
@@ -64,12 +81,32 @@ export const register = async ({
   return { userId };
 };
 
-export const verifyEmail = async (code: string): Promise<void> => {
+export const verifyEmail = async (email: string, code: string): Promise<void> => {
   if (!code || typeof code !== 'string' || code.length !== 4) {
     throw new Error('Invalid code format');
   }
 
-  console.log(`Verifying token: ${code}`);
+  console.log(`Verifying code: ${code}`);
+
+  const userResult = await db
+    .select({
+      id: users.id,
+      isEmailVerified: users.isEmailVerified,
+    })
+    .from(users)
+    .where(eq(users.email, email));
+
+  if (userResult.length === 0) {
+    console.log(`User not found for email: ${email}`);
+    throw new Error('User not found');
+  }
+
+  const user = userResult[0];
+
+  if (user.isEmailVerified) {
+    console.log(`Email already verified for user: ${user.id}`);
+    throw new Error('Email already verified');
+  }
 
   const codeResult = await db
     .select({
@@ -77,41 +114,55 @@ export const verifyEmail = async (code: string): Promise<void> => {
       expiresAt: verificationCode.expiresAt,
     })
     .from(verificationCode)
-    .where(and(eq(verificationCode.code, code), gt(verificationCode.expiresAt, new Date())))
-    .limit(1);
+    .where(
+      and(
+        eq(verificationCode.userId, user.id),
+        eq(verificationCode.code, code),
+        gt(verificationCode.expiresAt, new Date())
+      )
+    );
 
   if (codeResult.length === 0) {
-    const existingCode = await db
-      .select({ userId: verificationCode.userId })
-      .from(verificationCode)
-      .where(eq(verificationCode.code, code))
-      .limit(1);
-
-    if (existingCode.length > 0) {
-      const userId = existingCode[0].userId;
-
-      const userResult = await db
-        .select({ isEmailVerified: users.isEmailVerified })
-        .from(users)
-        .where(eq(users.id, userId))
-        .limit(1);
-
-      if (userResult.length > 0 && userResult[0].isEmailVerified) {
-        console.log(`User already verified for code: ${code}`);
-        return;
-      }
-    }
-
-    console.log(`Code not found or expired: ${code}`);
-    throw new Error('Invalid or expired code');
+    console.log(`Invalid or expired code for user: ${user.id}`);
+    throw new Error('Invalid or expired verification code');
   }
 
-  const userId = codeResult[0].userId;
+  await db.update(users).set({ isEmailVerified: true }).where(eq(users.id, user.id));
 
-  await db.update(users).set({ isEmailVerified: true }).where(eq(users.id, userId));
-  await db.delete(verificationCode).where(eq(verificationCode.userId, userId));
+  await db.delete(verificationCode).where(eq(verificationCode.userId, user.id));
 
-  console.log(`Email verified for user ${userId}`);
+  console.log(`Email verified successfully for user: ${user.id}`);
+};
+
+export const login = async ({ email, password }: LoginInput): Promise<LoginResult> => {
+  const [user] = await db.select().from(users).where(eq(users.email, email));
+
+  if (!user) throw new Error('User not found');
+  if (!user.isEmailVerified) throw new Error('Please verify your email');
+
+  const match = await comparePassword(password, user.password ?? '');
+  if (!match) throw new Error('Incorrect password');
+
+  const accessToken = generateAccessToken(user.id, email);
+  const refreshToken = generateRefreshToken(user.id);
+
+  return { accessToken, refreshToken };
+};
+
+export const refreshTokens = async ({
+  refreshToken,
+}: RefreshTokenInput): Promise<RefreshTokenResult> => {
+  const decoded = verifyToken(refreshToken, process.env.JWT_REFRESH_SECRET!);
+  if (!decoded || typeof decoded === 'string') throw new Error('Invalid or expired refresh token');
+
+  const { userId } = decoded as { userId: string };
+  const [user] = await db.select().from(users).where(eq(users.id, userId));
+  if (!user) throw new Error('User not found');
+
+  const accessToken = generateAccessToken(userId, user.email);
+  const newRefreshToken = generateRefreshToken(userId);
+
+  return { accessToken, refreshToken: newRefreshToken };
 };
 
 export const googleAuth = async ({ code, role }: { code: string; role: string }) => {
@@ -233,4 +284,75 @@ export const googleAuth = async ({ code, role }: { code: string; role: string })
     },
     isNewUser,
   };
+};
+
+export const forgotPassword = async (email: string) => {
+  const userResult = await db
+    .select({
+      id: users.id,
+    })
+    .from(users)
+    .where(eq(users.email, email));
+
+  if (userResult.length === 0) {
+    console.log(`No user found for email: ${email}`);
+    throw new Error('User not found');
+  }
+
+  const user = userResult[0];
+  const code = generateVerificationCode();
+  const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+
+  await db.delete(verificationCode).where(eq(verificationCode.userId, user.id));
+  await db.insert(verificationCode).values({
+    userId: user.id,
+    code,
+    expiresAt,
+  });
+
+  await sendPasswordResetEmail(email, code);
+
+  console.log(`Code sent to ${email}: ${code}`);
+};
+
+export const verifyResetCode = async (email: string, code: string) => {
+  const userResult = await db.select({ id: users.id }).from(users).where(eq(users.email, email));
+
+  if (userResult.length === 0) {
+    console.log(`No user found for email: ${email}`);
+    throw new Error('User not found');
+  }
+
+  const user = userResult[0];
+
+  const codeResult = await db
+    .select()
+    .from(verificationCode)
+    .where(
+      and(
+        eq(verificationCode.userId, user.id),
+        eq(verificationCode.code, code),
+        gte(verificationCode.expiresAt, new Date())
+      )
+    );
+
+  if (codeResult.length === 0) {
+    throw new Error('Invalid or expired code');
+  }
+
+  await db.delete(verificationCode).where(eq(verificationCode.id, codeResult[0].id));
+};
+
+export const resetPassword = async (email: string, newPassword: string) => {
+  const userResult = await db.select({ id: users.id }).from(users).where(eq(users.email, email));
+
+  if (userResult.length === 0) {
+    console.log(`No user found for email: ${email}`);
+    throw new Error('User not found');
+  }
+
+  const user = userResult[0];
+  const hashedPassword = await hashPassword(newPassword);
+
+  await db.update(users).set({ password: hashedPassword }).where(eq(users.id, user.id));
 };

@@ -7,6 +7,7 @@ import cookieParser from 'cookie-parser';
 import usersRoutes from './modules/users/users.routes';
 import authRoutes from './modules/auth/auth.routes';
 import { googleAuth } from './modules/auth/auth.service';
+import { sendVerificationEmail } from './modules/email/email.service';
 
 console.log('Starting API server...');
 

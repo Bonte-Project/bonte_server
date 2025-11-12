@@ -1,26 +1,113 @@
 import { Router } from 'express';
-import { getUser } from './users.controller';
+import { me, updateMe } from './users.controller';
+import { authMiddleware } from '../../shared/middlewares/auth.middleware';
 
 const router = Router();
 
 /**
  * @swagger
- * /users/{userId}:
- *   get:
- *     summary: Get a user by ID
- *     description: Retrieves a single user from the mock database by their unique ID.
- *     tags: [Users]
- *     parameters:
- *       - in: path
- *         name: userId
- *         schema:
+ * components:
+ *   securitySchemes:
+ *     bearerAuth:
+ *       type: http
+ *       scheme: bearer
+ *       bearerFormat: JWT
+ *   schemas:
+ *     User:
+ *       type: object
+ *       properties:
+ *         id:
  *           type: string
- *         required: true
- *         description: The unique ID of the user
- *         example: "1"
+ *           format: uuid
+ *         email:
+ *           type: string
+ *           format: email
+ *         fullName:
+ *           type: string
+ *         avatarUrl:
+ *           type: string
+ *           nullable: true
+ *         role:
+ *           type: string
+ *           enum: [user, trainer, admin]
+ *         isEmailVerified:
+ *           type: boolean
+ *         height:
+ *           type: integer
+ *           nullable: true
+ *         weight:
+ *           type: integer
+ *           nullable: true
+ *         age:
+ *           type: integer
+ *           nullable: true
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         isPremium:
+ *           type: boolean
+ *     UpdateUserDto:
+ *       type: object
+ *       properties:
+ *         fullName:
+ *           type: string
+ *         avatarUrl:
+ *           type: string
+ *           nullable: true
+ *         height:
+ *           type: integer
+ *           nullable: true
+ *         weight:
+ *           type: integer
+ *           nullable: true
+ *         age:
+ *           type: integer
+ *           nullable: true
+ *     ErrorResponse:
+ *       type: object
+ *       properties:
+ *         message:
+ *           type: string
+ *   responses:
+ *     UnauthorizedError:
+ *       description: Unauthorized
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ErrorResponse'
+ *           example:
+ *             message: Missing or invalid token
+ *     InternalServerError:
+ *       description: Internal Server Error
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ErrorResponse'
+ *           example:
+ *             message: Internal server error
+ *     BadRequestError:
+ *       description: Bad Request
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ErrorResponse'
+ *           example:
+ *             message: Invalid input
+ */
+
+/**
+ * @swagger
+ * /users/me:
+ *   get:
+ *     summary: Get current authenticated user
+ *     description: Returns data of the user associated with the provided access token
+ *     tags:
+ *       - Users
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: User retrieved successfully
+ *         description: User data fetched successfully
  *         content:
  *           application/json:
  *             schema:
@@ -28,79 +115,52 @@ const router = Router();
  *               properties:
  *                 message:
  *                   type: string
- *                   example: "User 1 was gotten successfully"
+ *                   example: User data fetched successfully
  *                 user:
- *                   $ref: '#/components/schemas/MockUser'
- *       400:
- *         description: Bad request - User ID is missing
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: "User ID is required"
- *       404:
- *         description: User not found
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: "User not found"
+ *                   $ref: '#/components/schemas/User'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  *       500:
- *         description: Internal server error
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: "Internal server error"
+ *         $ref: '#/components/responses/InternalServerError'
  */
+router.get('/me', authMiddleware, me);
 
 /**
  * @swagger
- * components:
- *   schemas:
- *     MockUser:
- *       type: object
- *       required:
- *         - id
- *         - name
- *         - email
- *         - role
- *         - createdAt
- *       properties:
- *         id:
- *           type: string
- *           description: Unique identifier for the user
- *           example: "1"
- *         name:
- *           type: string
- *           description: Full name of the user
- *           example: "Alice Johnson"
- *         email:
- *           type: string
- *           format: email
- *           description: Email address of the user
- *           example: "alice@example.com"
- *         role:
- *           type: string
- *           enum: [admin, user, moderator]
- *           description: Role of the user in the system
- *           example: "admin"
- *         createdAt:
- *           type: string
- *           format: date-time
- *           description: Timestamp when the user was created
- *           example: "2024-01-15T10:00:00Z"
+ * /users/me:
+ *   patch:
+ *     summary: Update current authenticated user
+ *     description: Updates data of the user associated with the provided access token
+ *     tags:
+ *       - Users
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UpdateUserDto'
+ *     responses:
+ *       200:
+ *         description: User data updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: User data updated successfully
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ *       400:
+ *         $ref: '#/components/responses/BadRequestError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
  */
-
-router.get('/:userId', getUser);
+router.patch('/me', authMiddleware, updateMe);
 
 export default router;
