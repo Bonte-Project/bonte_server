@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { register, verifyEmail, googleRegister, googleLogin } from './auth.controller';
 import {
   register,
   verifyEmail,
@@ -334,6 +335,12 @@ router.post('/google', googleRegister);
 
 /**
  * @swagger
+ * /auth/google/login:
+ *   post:
+ *     summary: Login with Google
+ *     description: Accepts a Google OAuth token and logs in the user
+ *     tags:
+ *       - Authentication
  * /auth/forgot-password:
  *   post:
  *     summary: Request password reset
@@ -345,6 +352,14 @@ router.post('/google', googleRegister);
  *         application/json:
  *           schema:
  *             type: object
+ *             properties:
+ *               token:
+ *                 type: string
+ *                 description: Google OAuth token
+ *                 example: eyJhbGciOiJSUzI1NiIsImtpZCI6...
+ *     responses:
+ *       200:
+ *         description: Google login successful
  *             required:
  *               - email
  *             properties:
@@ -362,6 +377,12 @@ router.post('/google', googleRegister);
  *               properties:
  *                 message:
  *                   type: string
+ *                   example: Google login successful
+ *                 token:
+ *                   type: string
+ *                   example: jwt-token-here
+ *       400:
+ *         description: Bad request - Missing or invalid token
  *                   example: Password reset code sent. Please check your email.
  *                 email:
  *                   type: string
@@ -374,7 +395,11 @@ router.post('/google', googleRegister);
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
- *             examples:
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
+ */
+router.post('/google/login', googleLogin);
+ /*             examples:
  *               missingEmail:
  *                 value:
  *                   message: Email is required
