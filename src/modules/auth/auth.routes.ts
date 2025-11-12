@@ -1,10 +1,9 @@
 import { Router } from 'express';
-import { register, verifyEmail, googleRegister, googleLogin } from './auth.controller';
 import {
   register,
   verifyEmail,
   googleRegister,
-  login,
+  googleLogin,
   refreshToken,
   forgotPassword,
   verifyResetCode,
@@ -260,7 +259,7 @@ router.post('/verify-email', verifyEmail);
  *       500:
  *         $ref: '#/components/responses/InternalServerError'
  */
-router.post('/login', login);
+router.post('/login', googleLogin);
 
 /**
  * @swagger
@@ -399,15 +398,27 @@ router.post('/google', googleRegister);
  *         $ref: '#/components/responses/InternalServerError'
  */
 router.post('/google/login', googleLogin);
- /*             examples:
- *               missingEmail:
- *                 value:
- *                   message: Email is required
- *               invalidEmail:
- *                 value:
- *                   message: Invalid email format
- *       404:
- *         description: User not found
+/**
+ * @swagger
+ * /auth/forgot-password:
+ *   post:
+ *     summary: Request password reset
+ *     description: Sends a 4-digit password reset code to the user's email if the email exists in the system.
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: john.doe@example.com
+ *     responses:
+ *       200:
+ *         description: Password reset code sent successfully
  *         content:
  *           application/json:
  *             schema:
