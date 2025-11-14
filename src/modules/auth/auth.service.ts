@@ -20,9 +20,10 @@ import {
 } from '../../shared/utils/auth.util';
 import { verificationCode } from '../../database/schema/verification_code.schema';
 import { sendPasswordResetEmail, sendVerificationEmail } from '../email/email.service';
-import jwt from 'jsonwebtoken';
-import axios from 'axios';
 import { googleOauthCredentials } from '../../database/schema/google_oauth_credentials.schema';
+import { OAuth2Client } from 'google-auth-library';
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 export const register = async ({
   fullName,
@@ -162,31 +163,35 @@ export const refreshTokens = async ({
   return { accessToken, refreshToken: newRefreshToken };
 };
 
-export const googleAuth = async ({ code, role }: { code: string; role: string }) => {
-  const tokenRes = await axios.post('https://oauth2.googleapis.com/token', {
-    code,
-    client_id: process.env.GOOGLE_CLIENT_ID!,
-    client_secret: process.env.GOOGLE_CLIENT_SECRET!,
-    redirect_uri: process.env.GOOGLE_REDIRECT_URI!,
-    grant_type: 'authorization_code',
+export const googleAuth = async ({ idToken, role }: { idToken: string; role?: string }) => {
+  const ticket = await googleClient.verifyIdToken({
+    idToken,
+    audience: process.env.GOOGLE_CLIENT_ID!,
   });
+  const payload = ticket.getPayload();
+  if (!payload) throw new Error('Invalid Google token payload');
 
-  const { access_token, refresh_token, expires_in } = tokenRes.data;
-
-  const profileRes = await axios.get('https://www.googleapis.com/oauth2/v2/userinfo', {
-    headers: { Authorization: `Bearer ${access_token}` },
-  });
-
-  const { id: googleId, email, name, picture } = profileRes.data;
+  const { sub: googleId, email, name, picture, email_verified } = payload;
+  if (!email) throw new Error('Email not found in Google token');
+  if (!email_verified) throw new Error('Email not verified by Google');
 
   const existingUsers = await db
-    .select({ id: users.id, isEmailVerified: users.isEmailVerified, role: users.role })
+    .select({
+      id: users.id,
+      isEmailVerified: users.isEmailVerified,
+      role: users.role,
+      fullName: users.fullName,
+      avatarUrl: users.avatarUrl,
+    })
     .from(users)
     .where(eq(users.email, email))
     .limit(1);
 
   let userId: string;
   let isNewUser = false;
+  let userRole: string;
+  let fullName: string;
+  let avatarUrl: string | null;
 
   const googleCred = await db
     .select({ userId: googleOauthCredentials.userId })
@@ -194,84 +199,68 @@ export const googleAuth = async ({ code, role }: { code: string; role: string })
     .where(eq(googleOauthCredentials.googleId, googleId))
     .limit(1);
 
-  if (googleCred.length && googleCred[0].userId !== existingUsers[0]?.id) {
+  if (googleCred.length && existingUsers.length && googleCred[0].userId !== existingUsers[0].id) {
     throw new Error('This Google account is already linked to another user');
   }
 
   if (!existingUsers.length) {
     if (!role) {
-      throw new Error('Role is required for new user registration');
+      throw new Error('Account not found');
     }
+
     const [newUser] = await db
       .insert(users)
       .values({
         email,
         fullName: name ?? email.split('@')[0],
-        avatarUrl: picture,
+        avatarUrl: picture ?? null,
         role,
         isEmailVerified: true,
       })
-      .returning({ id: users.id });
+      .returning({ id: users.id, fullName: users.fullName, avatarUrl: users.avatarUrl });
+
     userId = newUser.id;
+    userRole = role;
+    fullName = newUser.fullName ?? name ?? email.split('@')[0];
+    avatarUrl = newUser.avatarUrl;
     isNewUser = true;
   } else {
     const user = existingUsers[0];
     userId = user.id;
-    if (role && user.role !== role) {
+    userRole = user.role;
+    fullName = user.fullName ?? name ?? email.split('@')[0];
+    avatarUrl = user.avatarUrl;
+
+    if (role && role !== user.role) {
       throw new Error(`Account already exists with a different role: ${user.role}`);
     }
-    if (!user.isEmailVerified) {
-      await db.update(users).set({ isEmailVerified: true }).where(eq(users.id, userId));
+
+    if (picture && picture !== user.avatarUrl) {
+      await db.update(users).set({ avatarUrl: picture }).where(eq(users.id, userId));
+      avatarUrl = picture;
     }
   }
-
-  const tokenExpiry = new Date(Date.now() + expires_in * 1000);
 
   await db
     .insert(googleOauthCredentials)
     .values({
       userId,
       googleId,
-      accessToken: access_token,
-      refreshToken: refresh_token ?? null,
+      accessToken: idToken.substring(0, 255),
+      refreshToken: null,
     })
     .onConflictDoUpdate({
       target: googleOauthCredentials.userId,
-      set: {
-        googleId,
-        accessToken: access_token,
-        refreshToken: refresh_token ?? null,
-        createdAt: tokenExpiry,
-      },
+      set: { googleId, accessToken: idToken.substring(0, 255), createdAt: new Date() },
     });
 
-  const jwtAccessToken = jwt.sign({ userId, email }, process.env.JWT_SECRET || 'secret', {
-    expiresIn: '15m',
-  });
-  const jwtRefreshToken = jwt.sign(
-    { userId, email },
-    process.env.JWT_REFRESH_SECRET || 'refresh_secret',
-    {
-      expiresIn: '30d',
-    }
-  );
+  const jwtAccessToken = generateAccessToken(userId, email);
+  const jwtRefreshToken = generateRefreshToken(userId);
 
   return {
     accessToken: jwtAccessToken,
     refreshToken: jwtRefreshToken,
-    user: {
-      id: userId,
-      email,
-      fullName: name ?? email.split('@')[0],
-      role,
-      avatarUrl: picture,
-    },
-    googleUser: {
-      id: googleId,
-      email,
-      name,
-      picture,
-    },
+    user: { id: userId, email, fullName, role: userRole, avatarUrl },
     isNewUser,
   };
 };

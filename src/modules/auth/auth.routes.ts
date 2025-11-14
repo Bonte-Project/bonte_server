@@ -290,16 +290,13 @@ router.post('/refresh', refreshToken);
 
 /**
  * @swagger
- * /auth/google/login:
+ * /auth/google:
  *   post:
- *     summary: Login with Google
- *     description: Accepts a Google OAuth token and logs in the user
- *     tags:
- *       - Authentication
- * /auth/forgot-password:
- *   post:
- *     summary: Request password reset
- *     description: Sends a 4-digit password reset code to the user's email if the email exists in the system.
+ *     summary: Google OAuth login or registration
+ *     description: |
+ *       Authenticate or register user via Google OAuth.
+ *       - If `role` is provided and user doesn't exist → creates new user.
+ *       - If `role` is not provided → only login (user must already exist).
  *     tags: [Authentication]
  *     requestBody:
  *       required: true
@@ -307,24 +304,19 @@ router.post('/refresh', refreshToken);
  *         application/json:
  *           schema:
  *             type: object
- *             properties:
- *               token:
- *                 type: string
- *                 description: Google OAuth token
- *                 example: eyJhbGciOiJSUzI1NiIsImtpZCI6...
- *     responses:
- *       200:
- *         description: Google login successful
  *             required:
- *               - email
+ *               - idToken
  *             properties:
- *               email:
+ *               idToken:
  *                 type: string
- *                 format: email
- *                 example: john.doe@example.com
+ *                 description: Google ID token from client
+ *               role:
+ *                 type: string
+ *                 enum: [user, trainer]
+ *                 description: Required only for registration (first-time login)
  *     responses:
  *       200:
- *         description: Password reset code sent successfully
+ *         description: Success (login or registration)
  *         content:
  *           application/json:
  *             schema:
@@ -332,28 +324,46 @@ router.post('/refresh', refreshToken);
  *               properties:
  *                 message:
  *                   type: string
- *                   example: Google login successful
- *                 token:
+ *                 accessToken:
  *                   type: string
- *                   example: jwt-token-here
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ *                 isNewUser:
+ *                   type: boolean
  *       400:
- *         description: Bad request - Missing or invalid token
- *                   example: Password reset code sent. Please check your email.
- *                 email:
- *                   type: string
- *                   format: email
- *                   example: john.doe@example.com
- *       400:
- *         $ref: '#/components/responses/BadRequest'
- *         description: Invalid email format or missing email
+ *         description: Bad request
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
+ *             examples:
+ *               missingToken:
+ *                 value: { message: "Google ID token is required" }
+ *               roleRequired:
+ *                 value: { message: "Role is required for registration" }
+ *       404:
+ *         description: Account not found (login attempt without prior registration)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *             example:
+ *               message: "Account not found"
+ *       409:
+ *         description: Conflict
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *             examples:
+ *               alreadyLinked:
+ *                 value: { message: "This Google account is already linked to another user" }
+ *               wrongRole:
+ *                 value: { message: "Account already exists with a different role: trainer" }
  *       500:
  *         $ref: '#/components/responses/InternalServerError'
  */
-router.post('/google/login', googleLogin);
+router.post('/google', googleLogin);
 
 /**
  * @swagger

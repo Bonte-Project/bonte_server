@@ -116,11 +116,6 @@ export const login: ExpressHandler = async (req, res) => {
       return;
     }
 
-    // if (password.length < 6) {
-    //   res.status(400).json({ message: 'Password must be at least 6 characters long' });
-    //   return;
-    // }
-
     const { accessToken, refreshToken } = await authService.login({
       email: normalizedEmail,
       password,
@@ -204,12 +199,15 @@ export const refreshToken: ExpressHandler = async (req, res) => {
 
 export const googleLogin: ExpressHandler = async (req, res) => {
   try {
-    const { code, role } = req.body;
-    if (!code || !role) {
-      res.status(400).json({ message: 'Google OAuth code and role are required' });
+    const { idToken, role } = req.body;
+
+    if (!idToken) {
+      res.status(400).json({ message: 'Google ID token is required' });
       return;
     }
-    const result = await authService.googleAuth({ code, role });
+
+    const result = await authService.googleAuth({ idToken, role });
+
     res.cookie('refreshToken', result.refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -217,15 +215,35 @@ export const googleLogin: ExpressHandler = async (req, res) => {
       maxAge: 30 * 24 * 60 * 60 * 1000,
       path: '/',
     });
+
     res.status(200).json({
+      message: result.isNewUser ? 'Registration successful' : 'Login successful',
       accessToken: result.accessToken,
       user: result.user,
-      googleUser: result.googleUser,
+      isNewUser: result.isNewUser,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in googleLogin:', error);
     const errorMessage = extractErrorMessage(error);
-    res.status(500).json({ message: errorMessage || 'Internal server error' });
+
+    if (errorMessage.includes('Role is required')) {
+      res.status(400).json({ message: 'Role is required for registration' });
+      return;
+    }
+    if (errorMessage.includes('Account not found') || errorMessage.includes('User not found')) {
+      res.status(404).json({ message: 'Account not found' });
+      return;
+    }
+    if (errorMessage.includes('already linked')) {
+      res.status(409).json({ message: errorMessage });
+      return;
+    }
+    if (errorMessage.includes('different role')) {
+      res.status(409).json({ message: errorMessage });
+      return;
+    }
+
+    res.status(500).json({ message: 'Google authentication failed' });
   }
 };
 
