@@ -15,6 +15,13 @@
       "when": 1762177261410,
       "tag": "0001_uneven_dormammu",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1763106811592,
+      "tag": "0002_elite_pyro",
+      "breakpoints": true
     }
   ]
 }

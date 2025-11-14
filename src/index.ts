@@ -29,43 +29,9 @@ app.use('/api/trainers', trainersRoutes);
 app.use('/api/nutrition-logs', nutritionLogsRoutes);
 app.use('/api/sleep-logs', sleepLogsRoutes);
 
-app.get('/', (req, res) => {
+app.get('/', (_, res) => {
   res.send('API server is running');
 });
-
-app.get('/api/auth/google/callback', async (req, res) => {
-  const { code, role } = req.query;
-  if (!code) {
-    return res.status(400).send('No code provided');
-  }
-  if (!role) {
-    return res.status(400).send('No role provided');
-  }
-  try {
-    const codeStr = typeof code === 'object' ? JSON.stringify(code) : String(code);
-    const roleStr = typeof role === 'object' ? JSON.stringify(role) : String(role);
-    const result = await googleAuth({ code: codeStr, role: roleStr });
-    res.cookie('refreshToken', result.refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 30 * 24 * 60 * 60 * 1000,
-      path: '/',
-    });
-    res.status(200).json({
-      accessToken: result.accessToken,
-      user: result.user,
-      googleUser: result.googleUser,
-    });
-  } catch (error: any) {
-    res.status(400).json({
-      error: 'Google auth failed',
-      details: error.response?.data || error.message,
-    });
-  }
-});
-
-export default app;
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

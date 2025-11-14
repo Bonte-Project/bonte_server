@@ -5,6 +5,7 @@ export const googleOauthCredentials = pgTable('google_oauth_credentials', {
   id: uuid('id').primaryKey().defaultRandom(),
   userId: uuid('user_id')
     .notNull()
+    .unique()
     .references(() => users.id, { onDelete: 'cascade' }),
   googleId: text('google_id').notNull().unique(),
   accessToken: text('access_token'),
