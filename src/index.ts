@@ -6,6 +6,7 @@ import { swaggerSpec } from './swagger.config';
 import cookieParser from 'cookie-parser';
 import usersRoutes from './modules/users/users.routes';
 import authRoutes from './modules/auth/auth.routes';
+import trainersRoutes from './modules/trainers/trainers.routes';
 import { googleAuth } from './modules/auth/auth.service';
 import { sendVerificationEmail } from './modules/email/email.service';
 
@@ -22,6 +23,7 @@ app.use(express.json());
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use('/api/users', usersRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/trainers', trainersRoutes);
 
 app.get('/', (req, res) => {
   res.send('API server is running');
