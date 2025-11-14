@@ -1,7 +1,7 @@
 import { pgTable, uuid, text, timestamp } from 'drizzle-orm/pg-core';
 import { users } from './users.schema';
 
-export const google_oauth_credentials = pgTable('google_oauth_credentials', {
+export const googleOauthCredentials = pgTable('google_oauth_credentials', {
   id: uuid('id').primaryKey().defaultRandom(),
   userId: uuid('user_id')
     .notNull()

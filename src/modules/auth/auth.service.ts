@@ -22,7 +22,7 @@ import { verificationCode } from '../../database/schema/verification_code.schema
 import { sendPasswordResetEmail, sendVerificationEmail } from '../email/email.service';
 import jwt from 'jsonwebtoken';
 import axios from 'axios';
-import { google_oauth_credentials } from '../../database/schema/google_oauth_credentials.schema';
+import { googleOauthCredentials } from '../../database/schema/google_oauth_credentials.schema';
 
 export const register = async ({
   fullName,
@@ -189,9 +189,9 @@ export const googleAuth = async ({ code, role }: { code: string; role: string })
   let isNewUser = false;
 
   const googleCred = await db
-    .select({ userId: google_oauth_credentials.userId })
-    .from(google_oauth_credentials)
-    .where(eq(google_oauth_credentials.googleId, googleId))
+    .select({ userId: googleOauthCredentials.userId })
+    .from(googleOauthCredentials)
+    .where(eq(googleOauthCredentials.googleId, googleId))
     .limit(1);
 
   if (googleCred.length && googleCred[0].userId !== existingUsers[0]?.id) {
@@ -228,7 +228,7 @@ export const googleAuth = async ({ code, role }: { code: string; role: string })
   const tokenExpiry = new Date(Date.now() + expires_in * 1000);
 
   await db
-    .insert(google_oauth_credentials)
+    .insert(googleOauthCredentials)
     .values({
       userId,
       googleId,
@@ -236,7 +236,7 @@ export const googleAuth = async ({ code, role }: { code: string; role: string })
       refreshToken: refresh_token ?? null,
     })
     .onConflictDoUpdate({
-      target: google_oauth_credentials.userId,
+      target: googleOauthCredentials.userId,
       set: {
         googleId,
         accessToken: access_token,

@@ -202,33 +202,6 @@ export const refreshToken: ExpressHandler = async (req, res) => {
   }
 };
 
-export const googleRegister: ExpressHandler = async (req, res) => {
-  try {
-    const { code, role } = req.body;
-    if (!code || !role) {
-      res.status(400).json({ message: 'Google OAuth code and role are required' });
-      return;
-    }
-    const result = await authService.googleAuth({ code, role });
-    res.cookie('refreshToken', result.refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 30 * 24 * 60 * 60 * 1000,
-      path: '/',
-    });
-    res.status(201).json({
-      accessToken: result.accessToken,
-      user: result.user,
-      googleUser: result.googleUser,
-    });
-  } catch (error) {
-    console.error('Error in googleRegister:', error);
-    const errorMessage = extractErrorMessage(error);
-    res.status(500).json({ message: errorMessage || 'Internal server error' });
-  }
-};
-
 export const googleLogin: ExpressHandler = async (req, res) => {
   try {
     const { code, role } = req.body;
