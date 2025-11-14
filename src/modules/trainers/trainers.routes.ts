@@ -4,6 +4,9 @@ import {
   updateTrainerProfile,
   getMyTrainerProfile,
   getTrainerProfile,
+  addTrainerExperience,
+  updateTrainerExperience,
+  deleteTrainerExperience,
 } from './trainers.controller';
 import { authMiddleware } from '../../shared/middlewares/auth.middleware';
 
@@ -22,19 +25,49 @@ const router = Router();
  *         trainerId:
  *           type: string
  *           format: uuid
- *         position:
+ *         title:
  *           type: string
- *         company:
- *           type: string
- *         startDate:
- *           type: string
- *           format: date
- *         endDate:
- *           type: string
- *           format: date
- *           nullable: true
  *         description:
  *           type: string
+ *           nullable: true
+ *         startDate:
+ *           type: string
+ *           format: date-time
+ *         endDate:
+ *           type: string
+ *           format: date-time
+ *           nullable: true
+ *     CreateTrainerExperienceDto:
+ *       type: object
+ *       required:
+ *         - title
+ *       properties:
+ *         title:
+ *           type: string
+ *         description:
+ *           type: string
+ *           nullable: true
+ *         startDate:
+ *           type: string
+ *           format: date-time
+ *         endDate:
+ *           type: string
+ *           format: date-time
+ *           nullable: true
+ *     UpdateTrainerExperienceDto:
+ *       type: object
+ *       properties:
+ *         title:
+ *           type: string
+ *         description:
+ *           type: string
+ *           nullable: true
+ *         startDate:
+ *           type: string
+ *           format: date-time
+ *         endDate:
+ *           type: string
+ *           format: date-time
  *           nullable: true
  *     Trainer:
  *       type: object
@@ -45,54 +78,44 @@ const router = Router();
  *         userId:
  *           type: string
  *           format: uuid
+ *         bio:
+ *           type: string
+ *         certification:
+ *           type: string
  *         specialization:
  *           type: string
- *         about:
+ *         location:
  *           type: string
- *         achievements:
- *           type: string
- *         consultationPrice:
- *           type: number
- *         trainingPrice:
- *           type: number
  *         isActive:
  *           type: boolean
  *     CreateTrainerProfileDto:
  *       type: object
  *       properties:
+ *         bio:
+ *           type: string
+ *         certification:
+ *           type: string
  *         specialization:
  *           type: string
- *         about:
+ *         location:
  *           type: string
- *         achievements:
- *           type: string
- *         consultationPrice:
- *           type: number
- *         trainingPrice:
- *           type: number
  *         experience:
  *           type: array
  *           items:
- *             $ref: '#/components/schemas/TrainerExperience'
+ *             $ref: '#/components/schemas/CreateTrainerExperienceDto'
  *     UpdateTrainerProfileDto:
  *       type: object
  *       properties:
+ *         bio:
+ *           type: string
+ *         certification:
+ *           type: string
  *         specialization:
  *           type: string
- *         about:
+ *         location:
  *           type: string
- *         achievements:
- *           type: string
- *         consultationPrice:
- *           type: number
- *         trainingPrice:
- *           type: number
  *         isActive:
  *           type: boolean
- *         experience:
- *           type: array
- *           items:
- *             $ref: '#/components/schemas/TrainerExperience'
  *     FullTrainerProfile:
  *       allOf:
  *         - $ref: '#/components/schemas/Trainer'
@@ -254,5 +277,123 @@ router.get('/me', authMiddleware, getMyTrainerProfile);
  *         $ref: '#/components/responses/InternalServerError'
  */
 router.get('/:id', getTrainerProfile);
+
+/**
+ * @swagger
+ * /trainers/me/experience:
+ *   post:
+ *     summary: Add experience to trainer profile
+ *     description: Adds a new experience to the trainer profile of the authenticated user
+ *     tags:
+ *       - Trainers
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateTrainerExperienceDto'
+ *     responses:
+ *       201:
+ *         description: Trainer experience added successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Trainer experience added successfully
+ *                 experience:
+ *                   $ref: '#/components/schemas/TrainerExperience'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
+ */
+router.post('/me/experience', authMiddleware, addTrainerExperience);
+
+/**
+ * @swagger
+ * /trainers/me/experience/{experienceId}:
+ *   put:
+ *     summary: Update trainer experience
+ *     description: Updates an existing experience for the authenticated user's trainer profile
+ *     tags:
+ *       - Trainers
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: experienceId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UpdateTrainerExperienceDto'
+ *     responses:
+ *       200:
+ *         description: Trainer experience updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Trainer experience updated successfully
+ *                 experience:
+ *                   $ref: '#/components/schemas/TrainerExperience'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       404:
+ *         description: Trainer experience not found
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
+ */
+router.put('/me/experience/:experienceId', authMiddleware, updateTrainerExperience);
+
+/**
+ * @swagger
+ * /trainers/me/experience/{experienceId}:
+ *   delete:
+ *     summary: Delete trainer experience
+ *     description: Deletes an existing experience from the authenticated user's trainer profile
+ *     tags:
+ *       - Trainers
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: experienceId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Trainer experience deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Trainer experience deleted successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       404:
+ *         description: Trainer experience not found
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
+ */
+router.delete('/me/experience/:experienceId', authMiddleware, deleteTrainerExperience);
 
 export default router;

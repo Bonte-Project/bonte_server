@@ -1,8 +1,13 @@
 import { db } from '../../database';
 import { trainers } from '../../database/schema/trainers.schema';
 import { trainerExperience } from '../../database/schema/trainers_experience.schema';
-import { eq } from 'drizzle-orm';
-import { CreateTrainerProfileDto, UpdateTrainerProfileDto } from './types/trainers.type';
+import { and, eq } from 'drizzle-orm';
+import {
+  CreateTrainerExperienceDto,
+  CreateTrainerProfileDto,
+  UpdateTrainerExperienceDto,
+  UpdateTrainerProfileDto,
+} from './types/trainers.type';
 import { users } from '../../database/schema/users.schema';
 
 export const createTrainerProfile = async (userId: string, data: CreateTrainerProfileDto) => {
@@ -27,23 +32,11 @@ export const createTrainerProfile = async (userId: string, data: CreateTrainerPr
 };
 
 export const updateTrainerProfile = async (userId: string, data: UpdateTrainerProfileDto) => {
-  const { experience, ...trainerData } = data;
-
-  const updatedTrainer = await db.transaction(async tx => {
-    const [trainer] = await tx
-      .update(trainers)
-      .set(trainerData)
-      .where(eq(trainers.userId, userId))
-      .returning();
-
-    if (experience) {
-      await tx.delete(trainerExperience).where(eq(trainerExperience.trainerId, trainer.id));
-      const experienceValues = experience.map(exp => ({ ...exp, trainerId: trainer.id }));
-      await tx.insert(trainerExperience).values(experienceValues);
-    }
-
-    return trainer;
-  });
+  const [updatedTrainer] = await db
+    .update(trainers)
+    .set(data)
+    .where(eq(trainers.userId, userId))
+    .returning();
 
   return updatedTrainer;
 };
@@ -84,4 +77,50 @@ export const getFullTrainerProfile = async (trainerId: string) => {
   const experience = trainerProfile.map(row => row.trainer_experience).filter(Boolean);
 
   return { ...trainer, experience };
+};
+
+export const addTrainerExperience = async (userId: string, data: CreateTrainerExperienceDto) => {
+  const [trainer] = await db.select().from(trainers).where(eq(trainers.userId, userId));
+  if (!trainer) {
+    throw new Error('Trainer not found');
+  }
+
+  const [newExperience] = await db
+    .insert(trainerExperience)
+    .values({ ...data, trainerId: trainer.id })
+    .returning();
+
+  return newExperience;
+};
+
+export const updateTrainerExperience = async (
+  userId: string,
+  experienceId: string,
+  data: UpdateTrainerExperienceDto
+) => {
+  const [trainer] = await db.select().from(trainers).where(eq(trainers.userId, userId));
+  if (!trainer) {
+    throw new Error('Trainer not found');
+  }
+
+  const [updatedExperience] = await db
+    .update(trainerExperience)
+    .set(data)
+    .where(and(eq(trainerExperience.id, experienceId), eq(trainerExperience.trainerId, trainer.id)))
+    .returning();
+
+  return updatedExperience;
+};
+
+export const deleteTrainerExperience = async (userId: string, experienceId: string) => {
+  const [trainer] = await db.select().from(trainers).where(eq(trainers.userId, userId));
+  if (!trainer) {
+    throw new Error('Trainer not found');
+  }
+
+  await db
+    .delete(trainerExperience)
+    .where(
+      and(eq(trainerExperience.id, experienceId), eq(trainerExperience.trainerId, trainer.id))
+    );
 };
