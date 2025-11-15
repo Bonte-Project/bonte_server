@@ -1,6 +1,6 @@
 import { db } from '../../database';
 import { nutritionLogs } from '../../database/schema/nutrition_logs.schema';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, gte, lte } from 'drizzle-orm';
 import { CreateNutritionLogDto, UpdateNutritionLogDto } from './types/nutrition-logs.type';
 
 export const createNutritionLog = async (userId: string, data: CreateNutritionLogDto) => {
@@ -17,6 +17,24 @@ export const createNutritionLog = async (userId: string, data: CreateNutritionLo
 
 export const getNutritionLogs = async (userId: string) => {
   const logs = await db.select().from(nutritionLogs).where(eq(nutritionLogs.userId, userId));
+  return logs;
+};
+
+export const getNutritionLogsByPeriod = async (userId: string, date: string | number) => {
+  const targetDate = new Date(typeof date === 'string' ? date : +date);
+  const startDate = new Date(targetDate);
+  startDate.setDate(startDate.getDate() - 30);
+
+  const logs = await db
+    .select()
+    .from(nutritionLogs)
+    .where(
+      and(
+        eq(nutritionLogs.userId, userId),
+        gte(nutritionLogs.eatenAt, startDate),
+        lte(nutritionLogs.eatenAt, targetDate)
+      )
+    );
   return logs;
 };
 

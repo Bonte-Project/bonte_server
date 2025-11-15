@@ -3,6 +3,7 @@ import {
   createNutritionLog,
   deleteNutritionLog,
   getNutritionLogs,
+  getNutritionLogsByPeriod,
   updateNutritionLog,
 } from './nutrition-logs.service';
 import { CreateNutritionLogDto, UpdateNutritionLogDto } from './types/nutrition-logs.type';
@@ -45,6 +46,33 @@ export const getNutritionLogsHandler: ExpressHandler = async (req, res) => {
     });
   } catch (error) {
     console.error('Error in getNutritionLogsHandler:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+export const getNutritionLogsByPeriodHandler: ExpressHandler = async (req, res) => {
+  try {
+    const userId = req.user?.userId;
+    const { date } = req.query;
+
+    if (!userId) {
+      res.status(401).json({ message: 'Unauthorized: User ID not found' });
+      return;
+    }
+
+    if (!date) {
+      res.status(400).json({ message: 'Date query parameter is required' });
+      return;
+    }
+
+    const logs = await getNutritionLogsByPeriod(userId, date as string);
+
+    res.status(200).json({
+      message: 'Nutrition logs fetched successfully for the period',
+      logs,
+    });
+  } catch (error) {
+    console.error('Error in getNutritionLogsByPeriodHandler:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 };
