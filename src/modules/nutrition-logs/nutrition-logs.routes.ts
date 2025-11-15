@@ -2,6 +2,7 @@ import { Router } from 'express';
 import {
   createNutritionLogHandler,
   deleteNutritionLogHandler,
+  getNutritionLogsByPeriodHandler,
   getNutritionLogsHandler,
   updateNutritionLogHandler,
 } from './nutrition-logs.controller';
@@ -49,8 +50,11 @@ const router = Router();
  *         - calories
  *       properties:
  *         eatenAt:
- *           type: string
- *           format: date-time
+ *           oneOf:
+ *             - type: string
+ *               format: date-time
+ *             - type: number
+ *               description: 'Timestamp in milliseconds'
  *         mealType:
  *           type: string
  *           enum: [breakfast, lunch, dinner, snack]
@@ -68,8 +72,11 @@ const router = Router();
  *       type: object
  *       properties:
  *         eatenAt:
- *           type: string
- *           format: date-time
+ *           oneOf:
+ *             - type: string
+ *               format: date-time
+ *             - type: number
+ *               description: 'Timestamp in milliseconds'
  *         mealType:
  *           type: string
  *           enum: [breakfast, lunch, dinner, snack]
@@ -116,6 +123,51 @@ const router = Router();
  *         $ref: '#/components/responses/InternalServerError'
  */
 router.get('/', authMiddleware, getNutritionLogsHandler);
+
+/**
+ * @swagger
+ * /nutrition-logs/period:
+ *   get:
+ *     summary: Get nutrition logs for a 30-day period
+ *     description: Returns nutrition logs for the user for a 30-day period ending on the specified date.
+ *     tags:
+ *       - Nutrition Logs
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: date
+ *         required: true
+ *         schema:
+ *           oneOf:
+ *             - type: string
+ *               format: date-time
+ *             - type: number
+ *               description: 'Timestamp in milliseconds'
+ *         description: The end date of the 30-day period. Can be a date-time string or a timestamp.
+ *     responses:
+ *       200:
+ *         description: Nutrition logs fetched successfully for the period
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Nutrition logs fetched successfully for the period
+ *                 logs:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/NutritionLog'
+ *       400:
+ *         $ref: '#/components/responses/BadRequestError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
+ */
+router.get('/period', authMiddleware, getNutritionLogsByPeriodHandler);
 
 /**
  * @swagger
