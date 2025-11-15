@@ -36,6 +36,8 @@ const router = Router();
  *           type: integer
  *         fat:
  *           type: integer
+ *         weightInGrams:
+ *           type: integer
  *         createdAt:
  *           type: string
  *           format: date-time
@@ -60,6 +62,8 @@ const router = Router();
  *           type: integer
  *         fat:
  *           type: integer
+ *         weightInGrams:
+ *           type: integer
  *     UpdateNutritionLogDto:
  *       type: object
  *       properties:
@@ -76,6 +80,8 @@ const router = Router();
  *         carbs:
  *           type: integer
  *         fat:
+ *           type: integer
+ *         weightInGrams:
  *           type: integer
  */
 

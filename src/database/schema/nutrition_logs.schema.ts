@@ -11,6 +11,7 @@ export const nutritionLogs = pgTable('nutrition_logs', {
   protein: integer('protein'),
   carbs: integer('carbs'),
   fat: integer('fat'),
+  weightInGrams: integer('weight_in_grams'),
   eatenAt: timestamp('eaten_at').defaultNow().notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });

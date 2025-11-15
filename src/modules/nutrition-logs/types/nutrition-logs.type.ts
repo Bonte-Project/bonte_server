@@ -9,6 +9,7 @@ export type CreateNutritionLogDto = {
   protein?: number;
   carbs?: number;
   fat?: number;
+  weightInGrams?: number;
   eatenAt: Date;
 };
 
@@ -18,5 +19,6 @@ export type UpdateNutritionLogDto = {
   protein?: number;
   carbs?: number;
   fat?: number;
+  weightInGrams?: number;
   eatenAt?: Date;
 };

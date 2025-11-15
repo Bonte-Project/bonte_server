@@ -9,6 +9,7 @@ import authRoutes from './modules/auth/auth.routes';
 import trainersRoutes from './modules/trainers/trainers.routes';
 import nutritionLogsRoutes from './modules/nutrition-logs/nutrition-logs.routes';
 import sleepLogsRoutes from './modules/sleep-logs/sleep-logs.routes';
+import nutritionGoalsRoutes from './modules/nutrition-goals/nutrition-goals.routes';
 import { googleAuth } from './modules/auth/auth.service';
 import { sendVerificationEmail } from './modules/email/email.service';
 
@@ -28,6 +29,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/trainers', trainersRoutes);
 app.use('/api/nutrition-logs', nutritionLogsRoutes);
 app.use('/api/sleep-logs', sleepLogsRoutes);
+app.use('/api/nutrition-goals', nutritionGoalsRoutes);
 
 app.get('/', (_, res) => {
   res.send('API server is running');
