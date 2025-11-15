@@ -10,7 +10,7 @@ export type CreateNutritionLogDto = {
   carbs?: number;
   fat?: number;
   weightInGrams?: number;
-  eatenAt: Date;
+  eatenAt: Date | number;
 };
 
 export type UpdateNutritionLogDto = {
@@ -20,5 +20,5 @@ export type UpdateNutritionLogDto = {
   carbs?: number;
   fat?: number;
   weightInGrams?: number;
-  eatenAt?: Date;
+  eatenAt?: Date | number;
 };

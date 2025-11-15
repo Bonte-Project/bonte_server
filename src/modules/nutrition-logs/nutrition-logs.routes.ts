@@ -49,8 +49,11 @@ const router = Router();
  *         - calories
  *       properties:
  *         eatenAt:
- *           type: string
- *           format: date-time
+ *           oneOf:
+ *             - type: string
+ *               format: date-time
+ *             - type: number
+ *               description: 'Timestamp in milliseconds'
  *         mealType:
  *           type: string
  *           enum: [breakfast, lunch, dinner, snack]
@@ -68,8 +71,11 @@ const router = Router();
  *       type: object
  *       properties:
  *         eatenAt:
- *           type: string
- *           format: date-time
+ *           oneOf:
+ *             - type: string
+ *               format: date-time
+ *             - type: number
+ *               description: 'Timestamp in milliseconds'
  *         mealType:
  *           type: string
  *           enum: [breakfast, lunch, dinner, snack]

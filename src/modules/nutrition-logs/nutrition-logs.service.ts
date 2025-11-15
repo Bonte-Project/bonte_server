@@ -4,10 +4,14 @@ import { and, eq } from 'drizzle-orm';
 import { CreateNutritionLogDto, UpdateNutritionLogDto } from './types/nutrition-logs.type';
 
 export const createNutritionLog = async (userId: string, data: CreateNutritionLogDto) => {
-  const [newLog] = await db
-    .insert(nutritionLogs)
-    .values({ ...data, userId })
-    .returning();
+  const { eatenAt, ...rest } = data;
+  const processedData = {
+    ...rest,
+    userId,
+    eatenAt: typeof eatenAt === 'number' ? new Date(eatenAt) : eatenAt,
+  };
+
+  const [newLog] = await db.insert(nutritionLogs).values(processedData).returning();
   return newLog;
 };
 
@@ -21,9 +25,16 @@ export const updateNutritionLog = async (
   logId: string,
   data: UpdateNutritionLogDto
 ) => {
+  const { eatenAt, ...rest } = data;
+  const processedData: Record<string, any> = { ...rest };
+
+  if (eatenAt !== undefined) {
+    processedData.eatenAt = typeof eatenAt === 'number' ? new Date(eatenAt) : eatenAt;
+  }
+
   const [updatedLog] = await db
     .update(nutritionLogs)
-    .set(data)
+    .set(processedData)
     .where(and(eq(nutritionLogs.id, logId), eq(nutritionLogs.userId, userId)))
     .returning();
   return updatedLog;
