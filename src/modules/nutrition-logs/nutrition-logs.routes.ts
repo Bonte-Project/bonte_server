@@ -29,6 +29,8 @@ const router = Router();
  *         mealType:
  *           type: string
  *           enum: [breakfast, lunch, dinner, snack]
+ *         name:
+ *           type: string
  *         calories:
  *           type: integer
  *         protein:
@@ -47,6 +49,7 @@ const router = Router();
  *       required:
  *         - eatenAt
  *         - mealType
+ *         - name
  *         - calories
  *       properties:
  *         eatenAt:
@@ -58,6 +61,8 @@ const router = Router();
  *         mealType:
  *           type: string
  *           enum: [breakfast, lunch, dinner, snack]
+ *         name:
+ *           type: string
  *         calories:
  *           type: integer
  *         protein:
@@ -80,6 +85,8 @@ const router = Router();
  *         mealType:
  *           type: string
  *           enum: [breakfast, lunch, dinner, snack]
+ *         name:
+ *           type: string
  *         calories:
  *           type: integer
  *         protein:
