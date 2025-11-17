@@ -1,6 +1,6 @@
 import { db } from '../../database';
 import { sleepLogs } from '../../database/schema/sleep_logs.schema';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, gte, lte } from 'drizzle-orm';
 import { CreateSleepLogDto, UpdateSleepLogDto } from './types/sleep-logs.type';
 
 export const createSleepLog = async (userId: string, data: CreateSleepLogDto) => {
@@ -13,6 +13,24 @@ export const createSleepLog = async (userId: string, data: CreateSleepLogDto) =>
 
 export const getSleepLogs = async (userId: string) => {
   const logs = await db.select().from(sleepLogs).where(eq(sleepLogs.userId, userId));
+  return logs;
+};
+
+export const getSleepLogsByPeriod = async (userId: string, date: string | number) => {
+  const targetDate = new Date(typeof date === 'string' ? date : +date);
+  const startDate = new Date(targetDate);
+  startDate.setDate(startDate.getDate() - 30);
+
+  const logs = await db
+    .select()
+    .from(sleepLogs)
+    .where(
+      and(
+        eq(sleepLogs.userId, userId),
+        gte(sleepLogs.startTime, startDate),
+        lte(sleepLogs.endTime, targetDate)
+      )
+    );
   return logs;
 };
 

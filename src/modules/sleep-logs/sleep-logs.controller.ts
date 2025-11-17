@@ -1,5 +1,11 @@
 import { ExpressHandler } from '../../shared/types/express.type';
-import { createSleepLog, deleteSleepLog, getSleepLogs, updateSleepLog } from './sleep-logs.service';
+import {
+  createSleepLog,
+  deleteSleepLog,
+  getSleepLogs,
+  getSleepLogsByPeriod,
+  updateSleepLog,
+} from './sleep-logs.service';
 import { CreateSleepLogDto, UpdateSleepLogDto } from './types/sleep-logs.type';
 
 export const createSleepLogHandler: ExpressHandler = async (req, res) => {
@@ -40,6 +46,33 @@ export const getSleepLogsHandler: ExpressHandler = async (req, res) => {
     });
   } catch (error) {
     console.error('Error in getSleepLogsHandler:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+export const getSleepLogsByPeriodHandler: ExpressHandler = async (req, res) => {
+  try {
+    const userId = req.user?.userId;
+    const { date } = req.query;
+
+    if (!userId) {
+      res.status(401).json({ message: 'Unauthorized: User ID not found' });
+      return;
+    }
+
+    if (!date) {
+      res.status(400).json({ message: 'Date query parameter is required' });
+      return;
+    }
+
+    const logs = await getSleepLogsByPeriod(userId, date as string);
+
+    res.status(200).json({
+      message: 'Sleep logs fetched successfully for the period',
+      logs,
+    });
+  } catch (error) {
+    console.error('Error in getSleepLogsByPeriodHandler:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 };
