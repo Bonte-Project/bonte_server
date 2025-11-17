@@ -6,8 +6,8 @@ export const nutritionLogs = pgTable('nutrition_logs', {
   userId: uuid('user_id')
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
-  mealType: text('meal_type').notNull(), // breakfast, lunch, dinner, snack
   name: text('name').notNull(),
+  mealType: text('meal_type').notNull(), // breakfast, lunch, dinner, snack
   calories: integer('calories').notNull(),
   protein: integer('protein'),
   carbs: integer('carbs'),

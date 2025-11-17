@@ -4,8 +4,8 @@ export type NutritionLog = typeof nutritionLogs.$inferSelect;
 export type NewNutritionLog = typeof nutritionLogs.$inferInsert;
 
 export type CreateNutritionLogDto = {
-  mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack';
   name: string;
+  mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack';
   calories: number;
   protein?: number;
   carbs?: number;
@@ -15,8 +15,8 @@ export type CreateNutritionLogDto = {
 };
 
 export type UpdateNutritionLogDto = {
-  mealType?: 'breakfast' | 'lunch' | 'dinner' | 'snack';
   name?: string;
+  mealType?: 'breakfast' | 'lunch' | 'dinner' | 'snack';
   calories?: number;
   protein?: number;
   carbs?: number;
