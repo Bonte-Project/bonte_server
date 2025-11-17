@@ -2,6 +2,7 @@ import { Router } from 'express';
 import {
   createSleepLogHandler,
   deleteSleepLogHandler,
+  getSleepLogsByPeriodHandler,
   getSleepLogsHandler,
   updateSleepLogHandler,
 } from './sleep-logs.controller';
@@ -42,11 +43,17 @@ const router = Router();
  *         - quality
  *       properties:
  *         startTime:
- *           type: string
- *           format: date-time
+ *           oneOf:
+ *             - type: string
+ *               format: date-time
+ *             - type: number
+ *               description: 'Timestamp in milliseconds'
  *         endTime:
- *           type: string
- *           format: date-time
+ *           oneOf:
+ *             - type: string
+ *               format: date-time
+ *             - type: number
+ *               description: 'Timestamp in milliseconds'
  *         quality:
  *           type: string
  *           enum: [good, average, poor]
@@ -54,11 +61,17 @@ const router = Router();
  *       type: object
  *       properties:
  *         startTime:
- *           type: string
- *           format: date-time
+ *           oneOf:
+ *             - type: string
+ *               format: date-time
+ *             - type: number
+ *               description: 'Timestamp in milliseconds'
  *         endTime:
- *           type: string
- *           format: date-time
+ *           oneOf:
+ *             - type: string
+ *               format: date-time
+ *             - type: number
+ *               description: 'Timestamp in milliseconds'
  *         quality:
  *           type: string
  *           enum: [good, average, poor]
@@ -95,6 +108,51 @@ const router = Router();
  *         $ref: '#/components/responses/InternalServerError'
  */
 router.get('/', authMiddleware, getSleepLogsHandler);
+
+/**
+ * @swagger
+ * /sleep-logs/period:
+ *   get:
+ *     summary: Get sleep logs for a 30-day period
+ *     description: Returns sleep logs for the user for a 30-day period ending on the specified date.
+ *     tags:
+ *       - Sleep Logs
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: date
+ *         required: true
+ *         schema:
+ *           oneOf:
+ *             - type: string
+ *               format: date-time
+ *             - type: number
+ *               description: 'Timestamp in milliseconds'
+ *         description: The end date of the 30-day period. Can be a date-time string or a timestamp.
+ *     responses:
+ *       200:
+ *         description: Sleep logs fetched successfully for the period
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Sleep logs fetched successfully for the period
+ *                 logs:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/SleepLog'
+ *       400:
+ *         $ref: '#/components/responses/BadRequestError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
+ */
+router.get('/period', authMiddleware, getSleepLogsByPeriodHandler);
 
 /**
  * @swagger

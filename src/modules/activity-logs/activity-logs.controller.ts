@@ -1,14 +1,14 @@
 import { ExpressHandler } from '../../shared/types/express.type';
 import {
-  createSleepLog,
-  deleteSleepLog,
-  getSleepLogs,
-  getSleepLogsByPeriod,
-  updateSleepLog,
-} from './sleep-logs.service';
-import { CreateSleepLogDto, UpdateSleepLogDto } from './types/sleep-logs.type';
+  createActivityLog,
+  deleteActivityLog,
+  getActivityLogs,
+  getActivityLogsByPeriod,
+  updateActivityLog,
+} from './activity-logs.service';
+import { CreateActivityLogDto, UpdateActivityLogDto } from './types/activity-logs.type';
 
-export const createSleepLogHandler: ExpressHandler = async (req, res) => {
+export const createActivityLogHandler: ExpressHandler = async (req, res) => {
   try {
     const userId = req.user?.userId;
 
@@ -17,19 +17,19 @@ export const createSleepLogHandler: ExpressHandler = async (req, res) => {
       return;
     }
 
-    const log = await createSleepLog(userId, req.body as CreateSleepLogDto);
+    const log = await createActivityLog(userId, req.body as CreateActivityLogDto);
 
     res.status(201).json({
-      message: 'Sleep log created successfully',
+      message: 'Activity log created successfully',
       log,
     });
   } catch (error) {
-    console.error('Error in createSleepLogHandler:', error);
+    console.error('Error in createActivityLogHandler:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 };
 
-export const getSleepLogsHandler: ExpressHandler = async (req, res) => {
+export const getActivityLogsHandler: ExpressHandler = async (req, res) => {
   try {
     const userId = req.user?.userId;
 
@@ -38,19 +38,19 @@ export const getSleepLogsHandler: ExpressHandler = async (req, res) => {
       return;
     }
 
-    const logs = await getSleepLogs(userId);
+    const logs = await getActivityLogs(userId);
 
     res.status(200).json({
-      message: 'Sleep logs fetched successfully',
+      message: 'Activity logs fetched successfully',
       logs,
     });
   } catch (error) {
-    console.error('Error in getSleepLogsHandler:', error);
+    console.error('Error in getActivityLogsHandler:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 };
 
-export const getSleepLogsByPeriodHandler: ExpressHandler = async (req, res) => {
+export const getActivityLogsByPeriodHandler: ExpressHandler = async (req, res) => {
   try {
     const userId = req.user?.userId;
     const { date } = req.query;
@@ -65,19 +65,19 @@ export const getSleepLogsByPeriodHandler: ExpressHandler = async (req, res) => {
       return;
     }
 
-    const logs = await getSleepLogsByPeriod(userId, date as string);
+    const logs = await getActivityLogsByPeriod(userId, date as string);
 
     res.status(200).json({
-      message: 'Sleep logs fetched successfully for the period',
+      message: 'Activity logs fetched successfully for the period',
       logs,
     });
   } catch (error) {
-    console.error('Error in getSleepLogsByPeriodHandler:', error);
+    console.error('Error in getActivityLogsByPeriodHandler:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 };
 
-export const updateSleepLogHandler: ExpressHandler = async (req, res) => {
+export const updateActivityLogHandler: ExpressHandler = async (req, res) => {
   try {
     const userId = req.user?.userId;
     const logId = req.params.id;
@@ -87,24 +87,24 @@ export const updateSleepLogHandler: ExpressHandler = async (req, res) => {
       return;
     }
 
-    const updatedLog = await updateSleepLog(userId, logId, req.body as UpdateSleepLogDto);
+    const updatedLog = await updateActivityLog(userId, logId, req.body as UpdateActivityLogDto);
 
     if (!updatedLog) {
-      res.status(404).json({ message: 'Sleep log not found' });
+      res.status(404).json({ message: 'Activity log not found' });
       return;
     }
 
     res.status(200).json({
-      message: 'Sleep log updated successfully',
+      message: 'Activity log updated successfully',
       log: updatedLog,
     });
   } catch (error) {
-    console.error('Error in updateSleepLogHandler:', error);
+    console.error('Error in updateActivityLogHandler:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 };
 
-export const deleteSleepLogHandler: ExpressHandler = async (req, res) => {
+export const deleteActivityLogHandler: ExpressHandler = async (req, res) => {
   try {
     const userId = req.user?.userId;
     const logId = req.params.id;
@@ -114,18 +114,18 @@ export const deleteSleepLogHandler: ExpressHandler = async (req, res) => {
       return;
     }
 
-    const deletedLog = await deleteSleepLog(userId, logId);
+    const deletedLog = await deleteActivityLog(userId, logId);
 
     if (!deletedLog) {
-      res.status(404).json({ message: 'Sleep log not found' });
+      res.status(404).json({ message: 'Activity log not found' });
       return;
     }
 
     res.status(200).json({
-      message: 'Sleep log deleted successfully',
+      message: 'Activity log deleted successfully',
     });
   } catch (error) {
-    console.error('Error in deleteSleepLogHandler:', error);
+    console.error('Error in deleteActivityLogHandler:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 };
