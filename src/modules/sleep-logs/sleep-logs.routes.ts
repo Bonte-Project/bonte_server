@@ -43,11 +43,17 @@ const router = Router();
  *         - quality
  *       properties:
  *         startTime:
- *           type: string
- *           format: date-time
+ *           oneOf:
+ *             - type: string
+ *               format: date-time
+ *             - type: number
+ *               description: 'Timestamp in milliseconds'
  *         endTime:
- *           type: string
- *           format: date-time
+ *           oneOf:
+ *             - type: string
+ *               format: date-time
+ *             - type: number
+ *               description: 'Timestamp in milliseconds'
  *         quality:
  *           type: string
  *           enum: [good, average, poor]
@@ -55,11 +61,17 @@ const router = Router();
  *       type: object
  *       properties:
  *         startTime:
- *           type: string
- *           format: date-time
+ *           oneOf:
+ *             - type: string
+ *               format: date-time
+ *             - type: number
+ *               description: 'Timestamp in milliseconds'
  *         endTime:
- *           type: string
- *           format: date-time
+ *           oneOf:
+ *             - type: string
+ *               format: date-time
+ *             - type: number
+ *               description: 'Timestamp in milliseconds'
  *         quality:
  *           type: string
  *           enum: [good, average, poor]
