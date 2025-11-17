@@ -22,6 +22,34 @@
       "when": 1763106811592,
       "tag": "0002_elite_pyro",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1763218569713,
+      "tag": "0003_lowly_james_howlett",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1763233263808,
+      "tag": "0004_lazy_maximus",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1763315105945,
+      "tag": "0005_eager_wendigo",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1763315477110,
+      "tag": "0006_nosy_daimon_hellstrom",
+      "breakpoints": true
     }
   ]
 }

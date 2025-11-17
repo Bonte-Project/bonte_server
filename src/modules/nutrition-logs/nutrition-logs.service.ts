@@ -5,10 +5,20 @@ import { CreateNutritionLogDto, UpdateNutritionLogDto } from './types/nutrition-
 
 export const createNutritionLog = async (userId: string, data: CreateNutritionLogDto) => {
   const { eatenAt, ...rest } = data;
+
+  let processedEatenAt: Date;
+  if (typeof eatenAt === 'string' || typeof eatenAt === 'number') {
+    processedEatenAt = new Date(eatenAt);
+  } else if (eatenAt instanceof Date) {
+    processedEatenAt = eatenAt;
+  } else {
+    throw new Error('Invalid eatenAt format');
+  }
+
   const processedData = {
     ...rest,
     userId,
-    eatenAt: typeof eatenAt === 'number' ? new Date(eatenAt) : eatenAt,
+    eatenAt: processedEatenAt,
   };
 
   const [newLog] = await db.insert(nutritionLogs).values(processedData).returning();
@@ -47,7 +57,20 @@ export const updateNutritionLog = async (
   const processedData: Record<string, any> = { ...rest };
 
   if (eatenAt !== undefined) {
-    processedData.eatenAt = typeof eatenAt === 'number' ? new Date(eatenAt) : eatenAt;
+    let dateValue: Date;
+    if (typeof eatenAt === 'string' || typeof eatenAt === 'number') {
+      dateValue = new Date(eatenAt);
+    } else if (eatenAt instanceof Date) {
+      dateValue = eatenAt;
+    } else {
+      throw new Error('Invalid eatenAt format');
+    }
+
+    if (isNaN(dateValue.getTime())) {
+      throw new Error('Invalid date value for eatenAt');
+    }
+
+    processedData.eatenAt = dateValue;
   }
 
   const [updatedLog] = await db
