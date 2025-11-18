@@ -52,8 +52,7 @@ export const getTrainerProfileByUser = async (userId: string) => {
     return null;
   }
 
-  const [baseTrainer] = trainerProfile;
-  const { trainer_experience, ...trainer } = baseTrainer;
+  const { trainers: trainer } = trainerProfile[0];
 
   const experience = trainerProfile.map(row => row.trainer_experience).filter(Boolean);
 
@@ -71,8 +70,7 @@ export const getFullTrainerProfile = async (trainerId: string) => {
     return null;
   }
 
-  const [baseTrainer] = trainerProfile;
-  const { trainer_experience, ...trainer } = baseTrainer;
+  const { trainers: trainer } = trainerProfile[0];
 
   const experience = trainerProfile.map(row => row.trainer_experience).filter(Boolean);
 
