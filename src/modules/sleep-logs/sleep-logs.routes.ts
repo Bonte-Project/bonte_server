@@ -30,11 +30,7 @@ const router = Router();
  *           type: string
  *           format: date-time
  *         quality:
- *           type: string
- *           enum: [good, average, poor]
- *         createdAt:
- *           type: string
- *           format: date-time
+ *           type: integer
  *     CreateSleepLogDto:
  *       type: object
  *       required:
@@ -55,8 +51,7 @@ const router = Router();
  *             - type: number
  *               description: 'Timestamp in milliseconds'
  *         quality:
- *           type: string
- *           enum: [good, average, poor]
+ *           type: integer
  *     UpdateSleepLogDto:
  *       type: object
  *       properties:
@@ -73,8 +68,7 @@ const router = Router();
  *             - type: number
  *               description: 'Timestamp in milliseconds'
  *         quality:
- *           type: string
- *           enum: [good, average, poor]
+ *           type: integer
  */
 
 /**

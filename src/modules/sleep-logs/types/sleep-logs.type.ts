@@ -6,11 +6,11 @@ export type NewSleepLog = typeof sleepLogs.$inferInsert;
 export type CreateSleepLogDto = {
   startTime: Date | number;
   endTime: Date | number;
-  quality: 'good' | 'average' | 'poor';
+  quality: number;
 };
 
 export type UpdateSleepLogDto = {
   startTime?: Date | number;
   endTime?: Date | number;
-  quality?: 'good' | 'average' | 'poor';
+  quality?: number;
 };
