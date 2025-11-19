@@ -10,6 +10,16 @@ import {
 } from './types/trainers.type';
 import { users } from '../../database/schema/users.schema';
 
+const processDate = (date: Date | number | undefined | null): Date | undefined => {
+  if (date === null || date === undefined) {
+    return undefined;
+  }
+  if (date instanceof Date) {
+    return date;
+  }
+  return new Date(date);
+};
+
 export const createTrainerProfile = async (userId: string, data: CreateTrainerProfileDto) => {
   const { experience, ...trainerData } = data;
 
@@ -20,7 +30,12 @@ export const createTrainerProfile = async (userId: string, data: CreateTrainerPr
       .returning();
 
     if (experience && experience.length > 0) {
-      const experienceValues = experience.map(exp => ({ ...exp, trainerId: trainer.id }));
+      const experienceValues = experience.map(exp => ({
+        ...exp,
+        trainerId: trainer.id,
+        startDate: processDate(exp.startDate),
+        endDate: processDate(exp.endDate),
+      }));
       await tx.insert(trainerExperience).values(experienceValues);
     }
     await tx.update(users).set({ role: 'trainer' }).where(eq(users.id, userId));
@@ -83,9 +98,15 @@ export const addTrainerExperience = async (userId: string, data: CreateTrainerEx
     throw new Error('Trainer not found');
   }
 
+  const experienceData = {
+    ...data,
+    startDate: processDate(data.startDate),
+    endDate: processDate(data.endDate),
+  };
+
   const [newExperience] = await db
     .insert(trainerExperience)
-    .values({ ...data, trainerId: trainer.id })
+    .values({ ...experienceData, trainerId: trainer.id })
     .returning();
 
   return newExperience;
@@ -101,9 +122,18 @@ export const updateTrainerExperience = async (
     throw new Error('Trainer not found');
   }
 
+  const experienceData: Record<string, unknown> = { ...data };
+
+  if (data.startDate) {
+    experienceData.startDate = processDate(data.startDate);
+  }
+  if (data.endDate) {
+    experienceData.endDate = processDate(data.endDate);
+  }
+
   const [updatedExperience] = await db
     .update(trainerExperience)
-    .set(data)
+    .set(experienceData)
     .where(and(eq(trainerExperience.id, experienceId), eq(trainerExperience.trainerId, trainer.id)))
     .returning();
 
