@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { me, updateMe } from './users.controller';
+import { me, updateMe, getUserById } from './users.controller';
 import { authMiddleware } from '../../shared/middlewares/auth.middleware';
 
 const router = Router();
@@ -162,5 +162,51 @@ router.get('/me', authMiddleware, me);
  *         $ref: '#/components/responses/InternalServerError'
  */
 router.patch('/me', authMiddleware, updateMe);
+
+/**
+ * @swagger
+ * /users/{id}:
+ *   get:
+ *     summary: Get user by ID
+ *     description: Returns data of a specific user by their ID
+ *     tags:
+ *       - Users
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: User ID
+ *     responses:
+ *       200:
+ *         description: User data fetched successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: User data fetched successfully
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       404:
+ *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *           example:
+ *             message: User not found
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
+ */
+router.get('/:id', authMiddleware, getUserById);
 
 export default router;

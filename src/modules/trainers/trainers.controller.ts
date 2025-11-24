@@ -7,6 +7,7 @@ import {
   getTrainerProfileByUser as getTrainerProfileByUserService,
   updateTrainerExperience as updateTrainerExperienceService,
   updateTrainerProfile as updateTrainerProfileService,
+  getAllTrainers as getAllTrainersService,
 } from './trainers.service';
 import {
   CreateTrainerExperienceDto,
@@ -105,6 +106,19 @@ export const getTrainerProfile: ExpressHandler = async (req, res) => {
     });
   } catch (error) {
     console.error('Error in getTrainerProfile:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+export const getAllTrainers: ExpressHandler = async (req, res) => {
+  try {
+    const trainers = await getAllTrainersService();
+    res.status(200).json({
+      message: 'Trainers fetched successfully',
+      trainers,
+    });
+  } catch (error) {
+    console.error('Error in getAllTrainers:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 };

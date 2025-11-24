@@ -1,5 +1,9 @@
 import { ExpressHandler } from '../../shared/types/express.type';
-import { getMe, updateMe as updateMeService } from './users.service';
+import {
+  getMe as getMeService,
+  updateMe as updateMeService,
+  getUserById as getUserByIdService,
+} from './users.service';
 import { UpdateUserDto } from './types/users.type';
 
 export const me: ExpressHandler = async (req, res) => {
@@ -11,7 +15,7 @@ export const me: ExpressHandler = async (req, res) => {
       return;
     }
 
-    const user = await getMe(userId);
+    const user = await getMeService(userId);
 
     if (!user) {
       res.status(401).json({ message: 'Unauthorized' });
@@ -45,6 +49,26 @@ export const updateMe: ExpressHandler = async (req, res) => {
     });
   } catch (error) {
     console.error('Error in updateMe:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+export const getUserById: ExpressHandler = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await getUserByIdService(id);
+
+    if (!user) {
+      res.status(404).json({ message: 'User not found' });
+      return;
+    }
+
+    res.status(200).json({
+      message: 'User data fetched successfully',
+      user,
+    });
+  } catch (error) {
+    console.error('Error in getUserById:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 };
