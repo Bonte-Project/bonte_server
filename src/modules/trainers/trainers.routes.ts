@@ -7,6 +7,7 @@ import {
   addTrainerExperience,
   updateTrainerExperience,
   deleteTrainerExperience,
+  getAllTrainers,
 } from './trainers.controller';
 import { authMiddleware } from '../../shared/middlewares/auth.middleware';
 
@@ -162,6 +163,34 @@ const router = Router();
  *         $ref: '#/components/responses/InternalServerError'
  */
 router.post('/', authMiddleware, createTrainerProfile);
+
+/**
+ * @swagger
+ * /trainers:
+ *   get:
+ *     summary: Get all trainers
+ *     description: Returns a list of all trainers with their full profiles
+ *     tags:
+ *       - Trainers
+ *     responses:
+ *       200:
+ *         description: Trainers fetched successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Trainers fetched successfully
+ *                 trainers:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/FullTrainerProfile'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
+ */
+router.get('/', getAllTrainers);
 
 /**
  * @swagger

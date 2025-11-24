@@ -92,6 +92,36 @@ export const getFullTrainerProfile = async (trainerId: string) => {
   return { ...trainer, experience };
 };
 
+export const getAllTrainers = async () => {
+  const allTrainers = await db
+    .select()
+    .from(trainers)
+    .leftJoin(trainerExperience, eq(trainers.id, trainerExperience.trainerId));
+
+  const trainersMap: Record<
+    string,
+    { trainer: typeof trainers.$inferSelect; experience: (typeof trainerExperience.$inferSelect)[] }
+  > = {};
+
+  for (const row of allTrainers) {
+    const trainerId = row.trainers.id;
+    if (!trainersMap[trainerId]) {
+      trainersMap[trainerId] = {
+        trainer: row.trainers,
+        experience: [],
+      };
+    }
+    if (row.trainer_experience) {
+      trainersMap[trainerId].experience.push(row.trainer_experience);
+    }
+  }
+
+  return Object.values(trainersMap).map(({ trainer, experience }) => ({
+    ...trainer,
+    experience,
+  }));
+};
+
 export const addTrainerExperience = async (userId: string, data: CreateTrainerExperienceDto) => {
   const [trainer] = await db.select().from(trainers).where(eq(trainers.userId, userId));
   if (!trainer) {
