@@ -1,7 +1,7 @@
 import { db } from '../../database';
 import { trainer_messages } from '../../database/schema/trainer_messages.schema';
 import { and, eq } from 'drizzle-orm';
-import { CreateTrainerMessageDto, NewTrainerMessage } from './types/trainer-messages.type';
+import { NewTrainerMessage } from './types/trainer-messages.type';
 import { asc } from 'drizzle-orm';
 import { users } from '../../database/schema/users.schema';
 import { trainers } from '../../database/schema/trainers.schema';

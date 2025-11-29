@@ -30,6 +30,7 @@
   },
   "dependencies": {
     "@getbrevo/brevo": "^3.0.1",
+    "@google/generative-ai": "^0.24.1",
     "@sendgrid/mail": "^8.1.6",
     "@types/axios": "^0.14.4",
     "axios": "^1.13.2",
@@ -46,7 +47,8 @@
     "resend": "^6.4.1",
     "sib-api-v3-sdk": "^8.5.0",
     "swagger-jsdoc": "^6.2.8",
-    "swagger-ui-express": "^5.0.1"
+    "swagger-ui-express": "^5.0.1",
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.38.0",
@@ -61,6 +63,7 @@
     "@types/pg": "^8.15.5",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
+    "@types/uuid": "^11.0.0",
     "dotenv-cli": "^10.0.0",
     "drizzle-kit": "^0.31.5",
     "eslint": "^9.38.0",
