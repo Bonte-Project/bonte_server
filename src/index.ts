@@ -12,8 +12,8 @@ import sleepLogsRoutes from './modules/sleep-logs/sleep-logs.routes';
 import nutritionGoalsRoutes from './modules/nutrition-goals/nutrition-goals.routes';
 import activityLogsRoutes from './modules/activity-logs/activity-logs.routes';
 import trainerMessagesRoutes from './modules/trainer-messages/trainer-messages.routes';
-import { googleAuth } from './modules/auth/auth.service';
-import { sendVerificationEmail } from './modules/email/email.service';
+import aiRoutes from './modules/ai/ai.routes';
+import { initializeDefaultPrompt } from './shared/utils/ai.util';
 
 console.log('Starting API server...');
 
@@ -34,6 +34,7 @@ app.use('/api/sleep-logs', sleepLogsRoutes);
 app.use('/api/nutrition-goals', nutritionGoalsRoutes);
 app.use('/api/activity-logs', activityLogsRoutes);
 app.use('/api/trainer-messages', trainerMessagesRoutes);
+app.use('/api/ai', aiRoutes);
 
 app.get('/', (_, res) => {
   res.send('API server is running');
@@ -42,4 +43,12 @@ app.get('/', (_, res) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
+
+  initializeDefaultPrompt()
+    .then(() => {
+      console.log('Default prompt initialized successfully');
+    })
+    .catch(error => {
+      console.error('Error initializing default prompt:', error);
+    });
 });
