@@ -10,6 +10,37 @@ const router = Router();
 
 /**
  * @swagger
+ * components:
+ *   schemas:
+ *     TrainerMessage:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           format: uuid
+ *           description: The unique identifier for the message.
+ *         user_id:
+ *           type: string
+ *           format: uuid
+ *           description: The ID of the user.
+ *         trainer_id:
+ *           type: string
+ *           format: uuid
+ *           description: The ID of the trainer.
+ *         message:
+ *           type: string
+ *           description: The content of the message.
+ *         sent_at:
+ *           type: string
+ *           format: date-time
+ *           description: The timestamp when the message was sent.
+ *         to_from:
+ *           type: boolean
+ *           description: "Direction of the message: true for user to trainer, false for trainer to user."
+ */
+
+/**
+ * @swagger
  * /trainer-messages/{id}:
  *   get:
  *     summary: Get messages with another user/trainer
@@ -32,6 +63,18 @@ const router = Router();
  *     responses:
  *       200:
  *         description: Messages fetched successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Messages fetched successfully
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/TrainerMessage'
  *       401:
  *         $ref: '#/components/responses/UnauthorizedError'
  *       403:
@@ -81,6 +124,16 @@ router.get('/:id', authMiddleware, getTrainerMessagesHandler);
  *     responses:
  *       201:
  *         description: Message sent successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Message sent successfully
+ *                 data:
+ *                   $ref: '#/components/schemas/TrainerMessage'
  *       400:
  *         $ref: '#/components/responses/BadRequestError'
  *       401:
