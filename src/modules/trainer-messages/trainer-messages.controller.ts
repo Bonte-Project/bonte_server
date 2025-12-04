@@ -6,8 +6,26 @@ import {
   getTrainerIdByUserId,
   getUserChatList,
   getTrainerChatList,
+  pollNewMessages,
 } from './trainer-messages.service';
 import { CreateTrainerMessageDto } from './types/trainer-messages.type';
+
+export const pollNewMessagesHandler: ExpressHandler = (req, res) => {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) {
+      res.status(401).json({ message: 'Unauthorized: User ID not found' });
+      return;
+    }
+
+    pollNewMessages(userId, req, res);
+  } catch (error) {
+    console.error('Error in pollNewMessagesHandler:', error);
+    if (!res.headersSent) {
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  }
+};
 
 export const createTrainerMessageHandler: ExpressHandler = async (req, res) => {
   try {

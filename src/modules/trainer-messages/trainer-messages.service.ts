@@ -1,13 +1,33 @@
+import { appEmitter } from '../../shared/utils/event.util';
+import { Request, Response } from 'express';
 import { db } from '../../database';
 import { trainer_messages } from '../../database/schema/trainer_messages.schema';
 import { and, eq } from 'drizzle-orm';
-import { NewTrainerMessage } from './types/trainer-messages.type';
+import { NewTrainerMessage, TrainerMessage } from './types/trainer-messages.type';
 import { asc } from 'drizzle-orm';
 import { users } from '../../database/schema/users.schema';
 import { trainers } from '../../database/schema/trainers.schema';
 
 export const createTrainerMessage = async (data: NewTrainerMessage) => {
   const [newMessage] = await db.insert(trainer_messages).values(data).returning();
+
+  if (newMessage) {
+    let recipientUserId: string | undefined;
+
+    if (data.to_from === false) {
+      // Trainer to User
+      recipientUserId = data.user_id;
+    } else {
+      // User to Trainer
+      const trainerUser = await getUserIdByTrainerId(data.trainer_id);
+      recipientUserId = trainerUser?.userId;
+    }
+
+    if (recipientUserId) {
+      appEmitter.emit(`newMessage:${recipientUserId}`, newMessage);
+    }
+  }
+
   return newMessage;
 };
 
@@ -34,6 +54,14 @@ export const getTrainerIdByUserId = async (userId: string) => {
   return trainer;
 };
 
+export const getUserIdByTrainerId = async (trainerId: string) => {
+  const [trainer] = await db
+    .select({ userId: trainers.userId })
+    .from(trainers)
+    .where(eq(trainers.id, trainerId));
+  return trainer;
+};
+
 export const getTrainerChatList = async (trainerId: string) => {
   const result = await db
     .selectDistinct({ userId: trainer_messages.user_id })
@@ -48,4 +76,29 @@ export const getUserChatList = async (userId: string) => {
     .from(trainer_messages)
     .where(eq(trainer_messages.user_id, userId));
   return result.map(r => r.trainerId);
+};
+
+export const pollNewMessages = (userId: string, req: Request, res: Response) => {
+  const eventName = `newMessage:${userId}`;
+
+  const onMessage = (message: TrainerMessage) => {
+    clearTimeout(timer);
+    if (!res.headersSent) {
+      res.status(200).json(message);
+    }
+  };
+
+  appEmitter.once(eventName, onMessage);
+
+  const timer = setTimeout(() => {
+    appEmitter.removeListener(eventName, onMessage);
+    if (!res.headersSent) {
+      res.status(204).send();
+    }
+  }, 120000); // timeout time
+
+  req.on('close', () => {
+    clearTimeout(timer);
+    appEmitter.removeListener(eventName, onMessage);
+  });
 };
