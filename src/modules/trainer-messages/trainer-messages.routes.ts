@@ -3,6 +3,7 @@ import {
   createTrainerMessageHandler,
   getTrainerMessagesHandler,
   getChatListHandler,
+  pollNewMessagesHandler,
 } from './trainer-messages.controller';
 import { authMiddleware } from '../../shared/middlewares/auth.middleware';
 
@@ -38,6 +39,36 @@ const router = Router();
  *           type: boolean
  *           description: "Direction of the message: true for user to trainer, false for trainer to user."
  */
+
+/**
+ * @swagger
+ * /trainer-messages/poll/new:
+ *   get:
+ *     summary: Poll for new messages
+ *     description: |
+ *       Waits for a new message to arrive for the authenticated user.
+ *       This endpoint holds the connection open until a new message is available or a timeout occurs (120 seconds).
+ *       If a new message arrives, it is returned immediately.
+ *       If the connection times out, it returns a 204 No Content status.
+ *     tags:
+ *       - Trainer Messages
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: A new message was received.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/TrainerMessage'
+ *       204:
+ *         description: No new message received within the timeout period.
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
+ */
+router.get('/poll/new', authMiddleware, pollNewMessagesHandler);
 
 /**
  * @swagger
