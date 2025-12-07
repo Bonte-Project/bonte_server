@@ -177,7 +177,7 @@ ${context.sleepHistory}
       .returning();
 
     const model = genAI.getGenerativeModel({
-      model: 'gemini-2.0-flash',
+      model: 'gemini-robotics-er-1.5-preview',
     });
 
     const chat = model.startChat({
@@ -332,7 +332,7 @@ IMPORTANT: This is the most up-to-date information about the user. Use this data
     }
 
     const model = genAI.getGenerativeModel({
-      model: 'gemini-2.0-flash',
+      model: 'gemini-robotics-er-1.5-preview',
     });
 
     chat = model.startChat({
