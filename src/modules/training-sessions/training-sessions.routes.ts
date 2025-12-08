@@ -7,6 +7,7 @@ import {
   updateTrainingSessionHandler,
 } from './training-sessions.controller';
 import { authMiddleware } from '../../shared/middlewares/auth.middleware';
+import { trainerAuthMiddleware } from '../../shared/middlewares/trainer.middleware';
 
 const router = Router();
 
@@ -105,7 +106,7 @@ router.get('/', authMiddleware, getTrainingSessionsHandler);
  * /training-sessions/trainer:
  *   get:
  *     summary: Get all training sessions for the current trainer
- *     description: Returns all training sessions for the trainer associated with the provided access token
+ *     description: Returns all training sessions for the trainer associated with the provided access token (trainer only)
  *     tags:
  *       - Training Sessions
  *     security:
@@ -127,6 +128,8 @@ router.get('/', authMiddleware, getTrainingSessionsHandler);
  *                     $ref: '#/components/schemas/TrainingSession'
  *       401:
  *         $ref: '#/components/responses/UnauthorizedError'
+ *       403:
+ *         $ref: '#/components/responses/ForbiddenError'
  *       500:
  *         $ref: '#/components/responses/InternalServerError'
  */
@@ -137,7 +140,7 @@ router.get('/trainer', authMiddleware, getTrainingSessionsByTrainerHandler);
  * /training-sessions:
  *   post:
  *     summary: Create a new training session
- *     description: Creates a new training session for the user associated with the provided access token
+ *     description: Creates a new training session (trainer only)
  *     tags:
  *       - Training Sessions
  *     security:
@@ -165,17 +168,19 @@ router.get('/trainer', authMiddleware, getTrainingSessionsByTrainerHandler);
  *         $ref: '#/components/responses/BadRequestError'
  *       401:
  *         $ref: '#/components/responses/UnauthorizedError'
+ *       403:
+ *         $ref: '#/components/responses/ForbiddenError'
  *       500:
  *         $ref: '#/components/responses/InternalServerError'
  */
-router.post('/', authMiddleware, createTrainingSessionHandler);
+router.post('/', authMiddleware, trainerAuthMiddleware, createTrainingSessionHandler);
 
 /**
  * @swagger
  * /training-sessions/{id}:
  *   patch:
  *     summary: Update a training session
- *     description: Updates a training session for the user associated with the provided access token
+ *     description: Updates a training session (trainer only)
  *     tags:
  *       - Training Sessions
  *     security:
@@ -210,6 +215,8 @@ router.post('/', authMiddleware, createTrainingSessionHandler);
  *         $ref: '#/components/responses/BadRequestError'
  *       401:
  *         $ref: '#/components/responses/UnauthorizedError'
+ *       403:
+ *         $ref: '#/components/responses/ForbiddenError'
  *       404:
  *         description: Not Found
  *         content:
@@ -221,14 +228,14 @@ router.post('/', authMiddleware, createTrainingSessionHandler);
  *       500:
  *         $ref: '#/components/responses/InternalServerError'
  */
-router.patch('/:id', authMiddleware, updateTrainingSessionHandler);
+router.patch('/:id', authMiddleware, trainerAuthMiddleware, updateTrainingSessionHandler);
 
 /**
  * @swagger
  * /training-sessions/{id}:
  *   delete:
  *     summary: Delete a training session
- *     description: Deletes a training session for the user associated with the provided access token
+ *     description: Deletes a training session (trainer only)
  *     tags:
  *       - Training Sessions
  *     security:
@@ -253,6 +260,8 @@ router.patch('/:id', authMiddleware, updateTrainingSessionHandler);
  *                   example: Training session deleted successfully
  *       401:
  *         $ref: '#/components/responses/UnauthorizedError'
+ *       403:
+ *         $ref: '#/components/responses/ForbiddenError'
  *       404:
  *         description: Not Found
  *         content:
@@ -264,6 +273,6 @@ router.patch('/:id', authMiddleware, updateTrainingSessionHandler);
  *       500:
  *         $ref: '#/components/responses/InternalServerError'
  */
-router.delete('/:id', authMiddleware, deleteTrainingSessionHandler);
+router.delete('/:id', authMiddleware, trainerAuthMiddleware, deleteTrainingSessionHandler);
 
 export default router;

@@ -7,18 +7,21 @@ import {
   updateTrainingSession,
 } from './training-sessions.service';
 import { CreateTrainingSessionDto, UpdateTrainingSessionDto } from './types/training-sessions.type';
+import { db } from '../../database';
+import { trainers } from '../../database/schema/trainers.schema';
+import { eq } from 'drizzle-orm';
 
 export const createTrainingSessionHandler: ExpressHandler = async (req, res) => {
   try {
-    const authenticatedTrainerId = req.user?.userId;
+    const authenticatedUserId = req.user?.userId;
 
-    if (!authenticatedTrainerId) {
-      res.status(401).json({ message: 'Unauthorized: Trainer ID not found' });
+    if (!authenticatedUserId) {
+      res.status(401).json({ message: 'Unauthorized: User ID not found' });
       return;
     }
 
     const session = await createTrainingSession(
-      authenticatedTrainerId,
+      authenticatedUserId,
       req.body as CreateTrainingSessionDto
     );
 
@@ -28,6 +31,10 @@ export const createTrainingSessionHandler: ExpressHandler = async (req, res) => 
     });
   } catch (error) {
     console.error('Error in createTrainingSessionHandler:', error);
+    if (error instanceof Error && error.message === 'Authenticated user is not a trainer') {
+      res.status(403).json({ message: 'Forbidden: Authenticated user is not a trainer' });
+      return;
+    }
     res.status(500).json({ message: 'Internal server error' });
   }
 };
@@ -55,14 +62,26 @@ export const getTrainingSessionsHandler: ExpressHandler = async (req, res) => {
 
 export const getTrainingSessionsByTrainerHandler: ExpressHandler = async (req, res) => {
   try {
-    const trainerId = req.user?.userId;
+    const authenticatedUserId = req.user?.userId;
 
-    if (!trainerId) {
-      res.status(401).json({ message: 'Unauthorized: Trainer ID not found' });
+    if (!authenticatedUserId) {
+      res.status(401).json({ message: 'Unauthorized: User ID not found' });
       return;
     }
 
-    const sessions = await getTrainingSessionsByTrainer(trainerId);
+    const trainerResult = await db
+      .select()
+      .from(trainers)
+      .where(eq(trainers.userId, authenticatedUserId))
+      .limit(1);
+
+    if (trainerResult.length === 0) {
+      res.status(403).json({ message: 'Forbidden: Authenticated user is not a trainer' });
+      return;
+    }
+    const trainer = trainerResult[0];
+
+    const sessions = await getTrainingSessionsByTrainer(trainer.id);
 
     res.status(200).json({
       message: 'Training sessions for trainer fetched successfully',
@@ -76,22 +95,22 @@ export const getTrainingSessionsByTrainerHandler: ExpressHandler = async (req, r
 
 export const updateTrainingSessionHandler: ExpressHandler = async (req, res) => {
   try {
-    const userId = req.user?.userId;
+    const authenticatedUserId = req.user?.userId;
     const sessionId = req.params.id;
 
-    if (!userId) {
+    if (!authenticatedUserId) {
       res.status(401).json({ message: 'Unauthorized: User ID not found' });
       return;
     }
 
     const updatedSession = await updateTrainingSession(
-      userId,
+      authenticatedUserId,
       sessionId,
       req.body as UpdateTrainingSessionDto
     );
 
     if (!updatedSession) {
-      res.status(404).json({ message: 'Training session not found' });
+      res.status(404).json({ message: 'Training session not found or user is not the trainer' });
       return;
     }
 
@@ -101,24 +120,28 @@ export const updateTrainingSessionHandler: ExpressHandler = async (req, res) => 
     });
   } catch (error) {
     console.error('Error in updateTrainingSessionHandler:', error);
+    if (error instanceof Error && error.message === 'Authenticated user is not a trainer') {
+      res.status(403).json({ message: 'Forbidden: Authenticated user is not a trainer' });
+      return;
+    }
     res.status(500).json({ message: 'Internal server error' });
   }
 };
 
 export const deleteTrainingSessionHandler: ExpressHandler = async (req, res) => {
   try {
-    const userId = req.user?.userId;
+    const authenticatedUserId = req.user?.userId;
     const sessionId = req.params.id;
 
-    if (!userId) {
+    if (!authenticatedUserId) {
       res.status(401).json({ message: 'Unauthorized: User ID not found' });
       return;
     }
 
-    const deletedSession = await deleteTrainingSession(userId, sessionId);
+    const deletedSession = await deleteTrainingSession(authenticatedUserId, sessionId);
 
     if (!deletedSession) {
-      res.status(404).json({ message: 'Training session not found' });
+      res.status(404).json({ message: 'Training session not found or user is not the trainer' });
       return;
     }
 
@@ -127,6 +150,10 @@ export const deleteTrainingSessionHandler: ExpressHandler = async (req, res) => 
     });
   } catch (error) {
     console.error('Error in deleteTrainingSessionHandler:', error);
+    if (error instanceof Error && error.message === 'Authenticated user is not a trainer') {
+      res.status(403).json({ message: 'Forbidden: Authenticated user is not a trainer' });
+      return;
+    }
     res.status(500).json({ message: 'Internal server error' });
   }
 };
