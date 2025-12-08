@@ -13,6 +13,7 @@ import nutritionGoalsRoutes from './modules/nutrition-goals/nutrition-goals.rout
 import activityLogsRoutes from './modules/activity-logs/activity-logs.routes';
 import trainerMessagesRoutes from './modules/trainer-messages/trainer-messages.routes';
 import aiRoutes from './modules/ai/ai.routes';
+import trainingSessionsRoutes from './modules/training-sessions/training-sessions.routes';
 import { initializeDefaultPrompt } from './shared/utils/ai.util';
 
 console.log('Starting API server...');
@@ -35,6 +36,7 @@ app.use('/api/nutrition-goals', nutritionGoalsRoutes);
 app.use('/api/activity-logs', activityLogsRoutes);
 app.use('/api/trainer-messages', trainerMessagesRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/training-sessions', trainingSessionsRoutes);
 
 app.get('/', (_, res) => {
   res.send('API server is running');
