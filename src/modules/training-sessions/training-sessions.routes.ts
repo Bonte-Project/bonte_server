@@ -2,6 +2,7 @@ import { Router } from 'express';
 import {
   createTrainingSessionHandler,
   deleteTrainingSessionHandler,
+  getTrainingSessionsByTrainerIdHandler,
   getTrainingSessionsByTrainerHandler,
   getTrainingSessionsHandler,
   updateTrainingSessionHandler,
@@ -134,6 +135,45 @@ router.get('/', authMiddleware, getTrainingSessionsHandler);
  *         $ref: '#/components/responses/InternalServerError'
  */
 router.get('/trainer', authMiddleware, getTrainingSessionsByTrainerHandler);
+
+/**
+ * @swagger
+ * /training-sessions/trainer/{trainerId}:
+ *   get:
+ *     summary: Get all training sessions for a specific trainer
+ *     description: Returns all training sessions for the given trainer ID
+ *     tags:
+ *       - Training Sessions
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: trainerId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Training sessions for trainer fetched successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Training sessions for trainer fetched successfully
+ *                 sessions:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/TrainingSession'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
+ */
+router.get('/trainer/:trainerId', authMiddleware, getTrainingSessionsByTrainerIdHandler);
 
 /**
  * @swagger

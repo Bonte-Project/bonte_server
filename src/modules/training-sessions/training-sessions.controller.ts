@@ -93,6 +93,22 @@ export const getTrainingSessionsByTrainerHandler: ExpressHandler = async (req, r
   }
 };
 
+export const getTrainingSessionsByTrainerIdHandler: ExpressHandler = async (req, res) => {
+  try {
+    const trainerId = req.params.trainerId;
+
+    const sessions = await getTrainingSessionsByTrainer(trainerId);
+
+    res.status(200).json({
+      message: 'Training sessions for trainer fetched successfully',
+      sessions,
+    });
+  } catch (error) {
+    console.error('Error in getTrainingSessionsByTrainerIdHandler:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
 export const updateTrainingSessionHandler: ExpressHandler = async (req, res) => {
   try {
     const authenticatedUserId = req.user?.userId;
